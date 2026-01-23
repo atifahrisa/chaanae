@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sejauh Apa Chaanae Hidup di Muka Bumi?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Landing Page */
+        #landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .typewriter {
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+            font-style: italic;
+            color: #a0a0ff;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .question {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            font-weight: bold;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeIn 2s 2s forwards;
+            line-height: 1.4;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 600px;
+            width: 100%;
+            opacity: 0;
+            animation: fadeIn 2s 4s forwards;
+        }
+
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #7b68ee;
+            padding: 1.5rem;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .choice-btn:hover {
+            background: rgba(123, 104, 238, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(123, 104, 238, 0.3);
+        }
+
+        /* Popup Result */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 2rem;
+        }
+
+        .popup-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            padding: 3rem;
+            border-radius: 20px;
+            max-width: 600px;
+            text-align: center;
+            border: 2px solid #7b68ee;
+            animation: popupAppear 0.5s;
+        }
+
+        @keyframes popupAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .popup-text {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #ffd700;
+        }
+
+        .continue-btn {
+            background: #7b68ee;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .continue-btn:hover {
+            background: #9b88ff;
+            transform: scale(1.05);
+        }
+
+        /* Profile Section */
+        #profile {
+            display: none;
+            min-height: 100vh;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .profile-header h1 {
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #7b68ee, #ff6ec7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .intro-text {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            color: #d0d0ff;
+        }
+
+        .platipus-vibes {
+            background: rgba(123, 104, 238, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            border-left: 4px solid #7b68ee;
+        }
+
+        .platipus-vibes ul {
+            list-style: none;
+            padding-left: 1rem;
+        }
+
+        .platipus-vibes li:before {
+            content: "🦆 ";
+            margin-right: 0.5rem;
+        }
+
+        .kepo-box {
+            background: rgba(255, 110, 199, 0.1);
+            border: 2px solid #ff6ec7;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .kepo-box:hover {
+            background: rgba(255, 110, 199, 0.2);
+            transform: scale(1.02);
+        }
+
+        .kepo-content {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #ff6ec7;
+        }
+
+        .side-quest {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .quest-item {
+            background: rgba(123, 104, 238, 0.15);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .quest-item:hover {
+            background: rgba(123, 104, 238, 0.25);
+            transform: translateY(-5px);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin: 3rem 0 1.5rem;
+            color: #ffd700;
+        }
+
+        .closing {
+            text-align: center;
+            margin: 4rem 0;
+            padding: 3rem;
+            background: rgba(123, 104, 238, 0.1);
+            border-radius: 20px;
+        }
+
+        .support-section {
+            text-align: center;
+            margin: 3rem 0;
+            padding: 2rem;
+            background: rgba(255, 110, 199, 0.1);
+            border-radius: 15px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .social-btn {
+            padding: 0.8rem 1.5rem;
+            background: #7b68ee;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+
+        .social-btn:hover {
+            background: #9b88ff;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .popup-content {
+                padding: 2rem;
+            }
+            
+            .profile-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <section id="landing">
+        <div class="typewriter">
+            "Sebelum kamu kenal Chaanae… jawab dulu satu pertanyaan penting."
+        </div>
+        
+        <div class="question">
+            Menurutmu, sejak kapan Chaanae hidup di muka bumi ini?
+        </div>
+        
+        <div class="choices">
+            <button class="choice-btn" onclick="showResult('A')">
+                300 abad lalu
+            </button>
+            <button class="choice-btn" onclick="showResult('B')">
+                Sejak manusia pertama bingung mau jadi apa
+            </button>
+            <button class="choice-btn" onclick="showResult('C')">
+                Sejak dunia butuh karakter NPC yang terlalu serius menjalani hidup
+            </button>
+        </div>
+    </section>
+
+    <!-- Popup Result -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <div id="popup-text" class="popup-text"></div>
+            <button class="continue-btn" onclick="goToProfile()">
+                Oke, kenalan lebih jauh sama Chaanae
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile Section -->
+    <section id="profile">
+        <div class="profile-header">
+            <h1>🌍 Siapa Itu Chaanae?</h1>
+            <p class="intro-text" id="intro-dynamic">
+                Chaanae memang sudah hidup selama <span id="answer-recap"></span>.<br>
+                Bukan vampir. Bukan alien. Tapi <strong>platipus</strong>.
+            </p>
+        </div>
+
+        <div class="platipus-vibes">
+            <h3>🦆 Platipus vibes:</h3>
+            <ul>
+                <li>Bisa ini itu</li>
+                <li>Nggak fokus satu hal</li>
+                <li>Tapi entah kenapa tetap survive</li>
+            </ul>
+        </div>
+
+        <p class="intro-text">
+            Chaanae itu <strong>ambivert ngarah ke extrovert</strong>. Bisa rame, bisa ilang. Bisa ketawa, bisa mikir keras sendirian jam 3 pagi.
+        </p>
+
+        <p class="intro-text">
+            Ia <strong>anak pertama dari 3 bersaudara</strong>.<br>
+            Role di hidup: <strong>tulang punggung keluarga</strong><br>
+            Skin yang dipakai: <strong>Wonder Woman versi capek tapi kuat</strong> 💪✨
+        </p>
+
+        <p class="intro-text">
+            Domisili: <strong>sekitar Maros</strong> 🏞️<br>
+            Status saat ini: <strong>beneran lagi jualan roti Maros</strong> 🍞
+        </p>
+
+        <!-- Kepo Box #1 -->
+        <div class="kepo-box" onclick="toggleKepo('kepo1')">
+            <div style="font-size: 1.2rem; font-weight: bold;">📦 Kepo tapi takut nanya? Klik aja.</div>
+            <div id="kepo1" class="kepo-content">
+                <p style="font-style: italic; color: #ffd700;">
+                    "Ini bukan side-quest. Ini cara bertahan hidup."
+                </p>
+                <p style="margin-top: 1rem;">
+                    Toko roti Maros ini bukan cuma bisnis biasa. Ini hasil dari keputusan untuk tetap berdiri, tetap produktif, dan tetap bermanfaat—walau dunia kadang terasa terlalu berat.
+                </p>
+            </div>
+        </div>
+
+        <h2 class="section-title">🌊 Aliran Hidup Chaanae</h2>
+        <p class="intro-text">
+            Chaanae hidup dengan <strong>aliran yang deras banget</strong>.<br>
+            Kalau orang lain naik perahu, dia berenang.<br>
+            Kalau orang lain pelan-pelan, dia kelempar ombak.
+        </p>
+
+        <div class="platipus-vibes">
+            <p>Makanya:</p>
+            <ul>
+                <li>Perjuangannya <strong>kuat</strong></li>
+                <li>Jalannya <strong>kadang nggak jelas</strong></li>
+                <li>Tapi berhentinya? <strong>nggak ada</strong></li>
+            </ul>
+        </div>
+
+        <p class="intro-text" style="text-align: center; font-size: 1.5rem; color: #ffd700;">
+            <em>"Bikin adik-adik bisa sekolah dengan layak & ibu bisa makan dengan tenang."</em>
+        </p>
+
+        <h2 class="section-title">🚀 Side-Quest yang Pernah (dan Sedang) Dijalanin</h2>
+        
+        <div class="side-quest">
+            <div class="quest-item">⛰️<br>Open trip pendakian</div>
+            <div class="quest-item">📚<br>Ngajar bahasa Inggris</div>
+            <div class="quest-item">🍱<br>Produksi makanan</div>
+            <div class="quest-item">🎥<br>Live streaming</div>
+            <div class="quest-item">💻<br>Website development</div>
+            <div class="quest-item">🎮<br>Game-like platform</div>
+        </div>
+
+        <!-- Kepo Box #2 -->
+        <div class="kepo-box" onclick="toggleKepo('kepo2')">
+            <div style="font-size: 1.2rem; font-weight: bold;">📦 Ngapain Aja Sih Sebenernya?</div>
+            <div id="kepo2" class="kepo-content">
+                <p style="font-style: italic; color: #ffd700; font-size: 1.2rem;">
+                    "Bukan nggak konsisten. Aku cuma terlalu penasaran sama hidup."
+                </p>
+            </div>
+        </div>
+
+        <div class="closing">
+            <h2 style="margin-bottom: 1rem;">💥</h2>
+            <p class="intro-text">
+                Chaanae mungkin belum nemu satu jawaban tentang hidupnya.<br>
+                Tapi satu hal pasti: <strong>dia nggak pernah berhenti nyoba</strong>.
+            </p>
+            <p style="margin-top: 2rem; font-size: 1.1rem;">
+                Kalau kamu sampai di bagian ini,<br>
+                berarti kamu udah kenal Chaanae lebih dari kebanyakan orang.
+            </p>
+        </div>
+
+        <div class="support-section">
+            <p style="font-size: 1.3rem; margin-bottom: 1rem;">
+                <em>"Kalau kamu suka ceritaku, berarti aku berhasil menyamarkan luka jadi humor."</em>
+            </p>
+            <p style="margin-bottom: 1rem;">
+                Kalau mau support, jangan kasihan.<br>
+                Cukup temani, follow, atau traktir aku mimpi kecil.
+            </p>
+            
+            <div class="social-links">
+                <a href="https://saweria.co/risaatifah" class="social-btn">🎁 Saweria</a>
+                <a href="https://www.instagram.com/risaatifah/" class="social-btn">📸 Instagram</a>
+                <a href="https://www.tiktok.com/@biasanyadipanggilchaa" class="social-btn">🎵 TikTok</a>
+                <a href="atifahrisa@gmail.com" class="social-btn">✉️ Email</a>
+            </div>
+            
+            <p style="margin-top: 2rem; font-style: italic; color: #ffd700;">
+                <em>Tenang, aku capek… tapi masih hidup.</em>
+            </p>
+        </div>
+    </section>
+
+    <script>
+        const results = {
+            A: 'WAHHH kamu benar! Sebenarnya Chaanae itu manusia purba yang entah kenapa masih hidup sampai era 2026. Evolusinya gagal, tapi tekad hidupnya update terus.',
+            B: 'FIX BENAR! Chaanae lahir di momen krisis eksistensial umat manusia. Sampai sekarang masih bertanya: "gue ini passion-nya apa sih?"',
+            C: 'KAMU TAU RAHASIANYA! Chaanae itu NPC dengan side-quest terlalu banyak. Hidupnya random, tapi penuh misi.'
+        };
+
+        const recaps = {
+            A: '300 abad lalu',
+            B: 'sejak manusia pertama bingung mau jadi apa',
+            C: 'sejak dunia butuh karakter NPC yang terlalu serius menjalani hidup'
+        };
+
+        let selectedAnswer = '';
+
+        function showResult(choice) {
+            selectedAnswer = choice;
+            document.getElementById('popup-text').textContent = results[choice];
+            document.getElementById('popup').style.display = 'flex';
+        }
+
+        function goToProfile() {
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('profile').style.display = 'block';
+            document.getElementById('answer-recap').textContent = recaps[selectedAnswer];
+            window.scrollTo(0, 0);
+        }
+
+        function toggleKepo(id) {
+            const content = document.getElementById(id);
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

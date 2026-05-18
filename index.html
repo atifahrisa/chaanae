@@ -1521,19 +1521,6 @@ function goTo(screenId) {
   const target = document.getElementById(screenId);
   target.classList.add('active');
   window.scrollTo(0, 0);
-
-  // Otomatis play musik saat visitor klik START (atau tombol apapun)
-  if (!musicPlaying && ytReady && ytPlayer) {
-    ytPlayer.playVideo();
-    musicPlaying = true;
-    const icon = document.getElementById('music-icon');
-    const label = document.getElementById('music-label');
-    const eq = document.getElementById('eq-bars');
-    if (icon) icon.classList.remove('paused');
-    if (label) label.textContent = 'MUTE';
-    if (eq) eq.classList.remove('stopped');
-  }
-
 /* ════════════════════════════════
    MODAL EXIT
 ════════════════════════════════ */

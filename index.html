@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chaanae — The Platypus Files</title>
+  <title>Chaanae — The Story of Life</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=IM+Fell+English:ital@0;1&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -30,7 +30,7 @@
       background: var(--black);
       color: var(--cream);
       overflow-x: hidden;
-      cursor: crosshair;
+      cursor: default;
     }
 
     /* ════════════════════════════════
@@ -89,17 +89,17 @@
       width: 100%; height: 100%;
       object-fit: cover;
       z-index: 0;
-      opacity: 0.55;
-      filter: grayscale(30%) brightness(0.6) contrast(1.1);
+      opacity: 1;
+      filter: grayscale(10%) brightness(1.15) contrast(1.0);
     }
 
-    /* Gradient overlay atas video */
+    /* Gradient overlay atas video — lebih ringan agar video terlihat */
     .start-overlay {
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(to right, rgba(5,5,5,0.92) 0%, rgba(5,5,5,0.65) 50%, rgba(5,5,5,0.2) 100%),
-        linear-gradient(to top, rgba(5,5,5,0.8) 0%, transparent 40%);
+        linear-gradient(to right, rgba(5,5,5,0.75) 0%, rgba(5,5,5,0.30) 55%, rgba(5,5,5,0.05) 100%),
+        linear-gradient(to top, rgba(5,5,5,0.55) 0%, transparent 30%);
       z-index: 1;
     }
 
@@ -949,6 +949,76 @@
       animation: blink 2.5s infinite;
     }
 
+    /* ════════════════════════════════
+       MUSIC PLAYER BAR (top right)
+    ════════════════════════════════ */
+    #music-bar {
+      position: absolute;
+      top: 1.2rem; right: 1.5rem;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+    }
+
+    .music-toggle {
+      background: rgba(5,5,5,.65);
+      border: 1px solid rgba(200,160,76,.35);
+      color: var(--gold);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      padding: .45rem 1rem;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      backdrop-filter: blur(6px);
+    }
+    .music-toggle:hover {
+      background: rgba(200,160,76,.15);
+      border-color: var(--gold);
+    }
+
+    .music-icon {
+      font-size: .9rem;
+      animation: spin 3s linear infinite;
+    }
+    .music-icon.paused { animation-play-state: paused; }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Equalizer bars */
+    .eq-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+    }
+    .eq-bar {
+      width: 3px;
+      background: var(--gold);
+      border-radius: 1px;
+      animation: eq 0.6s ease-in-out infinite alternate;
+    }
+    .eq-bar:nth-child(1) { animation-delay: 0s;    height: 8px; }
+    .eq-bar:nth-child(2) { animation-delay: .15s;  height: 14px; }
+    .eq-bar:nth-child(3) { animation-delay: .08s;  height: 6px; }
+    .eq-bar:nth-child(4) { animation-delay: .22s;  height: 11px; }
+    @keyframes eq {
+      from { transform: scaleY(.3); }
+      to   { transform: scaleY(1); }
+    }
+    .eq-bars.stopped .eq-bar { animation-play-state: paused; transform: scaleY(.3); }
+
+    /* YouTube iframe hidden */
+    #yt-player { position:absolute; top:-9999px; left:-9999px; width:1px; height:1px; pointer-events:none; }
+
     @media (max-width:480px) {
       .start-content { padding: 3rem 1.5rem; }
       .press-any { right: 1.5rem; bottom: 2rem; }
@@ -976,7 +1046,7 @@
     <div class="game-eyebrow">THE STORY LIFE · 2026</div>
 
     <h1 class="game-title">CHAANAE</h1>
-    <p class="game-subtitle">— Keajaiban biologis seseorang bersama platipus. —</p>
+    <p class="game-subtitle">— Cerita tentang seekor platipus yang bertahan hidup sampai detik ini —</p>
 
     <ul class="menu-list" role="menu">
       <li class="menu-item">
@@ -1005,6 +1075,23 @@
     <span class="vtext">OF</span>
     <span class="vnum" id="vtotal">—</span>
   </div>
+
+  <!-- Music bar top right -->
+  <div id="music-bar">
+    <div class="eq-bars stopped" id="eq-bars">
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+    </div>
+    <button class="music-toggle" id="music-btn" onclick="toggleMusic()">
+      <span class="music-icon paused" id="music-icon">♪</span>
+      <span id="music-label">PLAY MUSIC</span>
+    </button>
+  </div>
+
+  <!-- YouTube hidden player -->
+  <div id="yt-player"></div>
 
   <!-- Press any key hint -->
   <p class="press-any">[ Use arrow keys or click to navigate ]</p>
@@ -1434,11 +1521,7 @@ function goTo(screenId) {
   const target = document.getElementById(screenId);
   target.classList.add('active');
   window.scrollTo(0, 0);
-
-  // Trigger reveal animation for intro sections
-  if (screenId === 'intro-screen') {
-    setTimeout(revealSections, 100);
-  }
+  if (screenId === 'intro-screen') setTimeout(revealSections, 100);
 }
 
 /* ════════════════════════════════
@@ -1453,44 +1536,29 @@ function closeModal() {
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 /* ════════════════════════════════
-   SCROLL REVEAL (intro page)
+   SCROLL REVEAL
 ════════════════════════════════ */
 function revealSections() {
-  const sections = document.querySelectorAll('[data-reveal]');
-  sections.forEach((el, i) => {
+  document.querySelectorAll('[data-reveal]').forEach((el, i) => {
     setTimeout(() => el.classList.add('visible'), i * 150);
   });
 }
 
 /* ════════════════════════════════
-   VISITOR COUNTER (localStorage)
-════════════════════════════════ */
-(function() {
-  let total = parseInt(localStorage.getItem('c_total') || '0');
-  const isNew = !sessionStorage.getItem('c_visited');
-  if (isNew) {
-    total++;
-    localStorage.setItem('c_total', total);
-    sessionStorage.setItem('c_visited', '1');
-  }
-  const mine = parseInt(localStorage.getItem('c_mine') || '0') || total;
-  localStorage.setItem('c_mine', mine);
-
-  document.getElementById('vnum').textContent = mine.toLocaleString('id-ID');
-  document.getElementById('vtotal').textContent = total.toLocaleString('id-ID');
-})();
-
-/* ════════════════════════════════
-   VIDEO — fallback jika tidak ada
+   VIDEO SETUP — kecepatan & fallback
 ════════════════════════════════ */
 const video = document.getElementById('bg-video');
+video.addEventListener('loadeddata', () => {
+  video.playbackRate = 1.6; // kecepatan 1.6x — lebih cepat
+});
+// Juga set saat canplay untuk antisipasi browser tertentu
+video.addEventListener('canplay', () => {
+  video.playbackRate = 1.6;
+});
 video.addEventListener('error', () => {
-  // Kalau video tidak ditemukan, pasang gradient animated sebagai fallback
   video.style.display = 'none';
   document.getElementById('start-screen').style.background =
     'radial-gradient(ellipse at 20% 60%, rgba(139,0,0,.25) 0%, transparent 55%), ' +
@@ -1499,51 +1567,210 @@ video.addEventListener('error', () => {
 });
 
 /* ════════════════════════════════
+   VISITOR COUNTER GLOBAL — jsonbin.io
+   Data tersimpan permanen di cloud, real global counter.
+   Setiap device/browser baru = hitungan naik.
+   
+   SETUP (lakukan sekali):
+   1. Buka https://jsonbin.io → Sign Up gratis
+   2. Buat bin baru (New Bin) dengan isi: {"count": 0}
+   3. Copy BIN ID dan API KEY, tempel di bawah
+════════════════════════════════ */
+const JSONBIN_ID  = '6a0b91d16877513b27940d64';   // ← isi BIN ID dari jsonbin.io
+const JSONBIN_KEY = '$2a$10$Vol.KRtTJ6fobsZg.b5buuEIgoxkrYUF9Ky98tpI3/5S/aMo9Siye';  // ← isi API KEY dari jsonbin.io
+
+async function initVisitorCounter() {
+  const isNewSession = !sessionStorage.getItem('c_counted');
+  let myNum = 0;
+  let total = 0;
+
+  try {
+    if (JSONBIN_ID === 'GANTI_DENGAN_BIN_ID_KAMU') {
+      // Demo mode: belum dikonfigurasi, pakai localStorage saja
+      throw new Error('not configured');
+    }
+
+    // Ambil data saat ini
+    const getRes  = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const getData = await getRes.json();
+    total = getData.record?.count || 0;
+
+    if (isNewSession) {
+      // Tambah +1
+      const newTotal = total + 1;
+      myNum = newTotal;
+      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+        body: JSON.stringify({ count: newTotal })
+      });
+      total = newTotal;
+      sessionStorage.setItem('c_counted', '1');
+      sessionStorage.setItem('c_mynum', myNum);
+    } else {
+      myNum = parseInt(sessionStorage.getItem('c_mynum') || total);
+    }
+
+  } catch(e) {
+    // Fallback: localStorage (per-device, tidak global)
+    total = parseInt(localStorage.getItem('c_total_local') || '0');
+    if (isNewSession) {
+      total++;
+      myNum = total;
+      localStorage.setItem('c_total_local', total);
+      sessionStorage.setItem('c_counted', '1');
+      sessionStorage.setItem('c_mynum', myNum);
+    } else {
+      myNum = parseInt(sessionStorage.getItem('c_mynum') || total);
+    }
+  }
+
+  animateCount('vnum', myNum);
+  animateCount('vtotal', total);
+  return myNum;
+}
+
+// Animasi angka naik
+function animateCount(elId, target) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const duration = 1200;
+  const start = performance.now();
+  const startVal = 0;
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(startVal + (target - startVal) * ease);
+    el.textContent = current.toLocaleString('id-ID');
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ════════════════════════════════
+   YOUTUBE MUSIC PLAYER
+   Ganti VIDEO_ID di bawah dengan ID video YouTube kamu
+   Contoh: https://youtu.be/ABC123xyz → ID = "ABC123xyz"
+════════════════════════════════ */
+const YT_VIDEO_ID = 'eIQA6D9h6OQ'; // ← GANTI dengan ID YouTube kamu
+let ytPlayer = null;
+let musicPlaying = false;
+let ytReady = false;
+
+// Load YouTube IFrame API
+(function() {
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+})();
+
+// Callback dari YouTube API
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: YT_VIDEO_ID,
+    playerVars: {
+      autoplay: 0,
+      controls: 0,
+      loop: 1,
+      playlist: YT_VIDEO_ID,
+      mute: 0
+    },
+    events: {
+      onReady: () => { ytReady = true; },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.ENDED) {
+          ytPlayer.playVideo(); // manual loop
+        }
+      }
+    }
+  });
+}
+
+function toggleMusic() {
+  if (!ytReady || !ytPlayer) {
+    // Player belum siap
+    showToast('Player sedang loading…');
+    return;
+  }
+
+  const icon   = document.getElementById('music-icon');
+  const label  = document.getElementById('music-label');
+  const eqBars = document.getElementById('eq-bars');
+
+  if (!musicPlaying) {
+    ytPlayer.playVideo();
+    musicPlaying = true;
+    icon.classList.remove('paused');
+    label.textContent = 'MUTE';
+    eqBars.classList.remove('stopped');
+  } else {
+    ytPlayer.pauseVideo();
+    musicPlaying = false;
+    icon.classList.add('paused');
+    label.textContent = 'PLAY MUSIC';
+    eqBars.classList.add('stopped');
+  }
+}
+
+/* Toast helper */
+function showToast(msg) {
+  let t = document.getElementById('toast-msg');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast-msg';
+    t.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;background:#0a0a0f;color:#d4c5b0;padding:.7rem 1.2rem;border:1px solid rgba(200,160,76,.4);font-family:"Share Tech Mono",monospace;font-size:.75rem;letter-spacing:.1em;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+/* ════════════════════════════════
    DISCORD WEBHOOK TRACKER
 ════════════════════════════════ */
 const WEBHOOK_URL = 'https://discordapp.com/api/webhooks/1461067879679000620/I1cEocjMoJfqBBvUokf5_aruw3WEO71tysh6MYVV6WMWl_8FCP5VvEfnlR5M8E5FVh80';
 
-async function notifyVisitor() {
+async function notifyVisitor(myNum) {
   const lastSent = localStorage.getItem('c_webhook');
   if (lastSent && (Date.now() - parseInt(lastSent)) < 3600000) return;
-
   try {
     const geo = await fetch('https://ipapi.co/json/').then(r => r.json());
     const flag = geo.country_code
       ? geo.country_code.toUpperCase().replace(/./g, c => String.fromCodePoint(c.charCodeAt(0) + 127397))
       : '🌍';
-
     const payload = {
       username: '🔍 Platypus Tracker',
       embeds: [{
         title: `${flag} Pengunjung Baru — The Platypus Files`,
         color: 0xC9A84C,
         fields: [
+          { name: '📊 Pengunjung ke-', value: `**#${myNum || '?'}**`, inline: true },
           { name: '📍 Lokasi', value: `**${geo.city||'?'}**, ${geo.region||'-'}\n${geo.country_name||'?'} ${flag}`, inline: true },
-          { name: '🌐 IP', value: `\`${geo.ip||'?'}\``, inline: true },
+          { name: '🌐 IP', value: `\`${geo.ip||'?'}\``, inline: false },
           { name: '📡 ISP', value: geo.org || '-', inline: false },
           { name: '🕐 Waktu', value: new Date().toLocaleString('id-ID', { timeZone:'Asia/Makassar', dateStyle:'full', timeStyle:'short' }), inline: false },
           { name: '🤖 UA', value: `\`\`\`${navigator.userAgent.substring(0,180)}\`\`\``, inline: false }
         ],
-        footer: { text: 'Chaanae — The Platypus Files v2026' },
+        footer: { text: 'Chaanae — Little Introduction' },
         timestamp: new Date().toISOString()
       }]
     };
-
-    const res = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     if (res.ok) localStorage.setItem('c_webhook', Date.now().toString());
-  } catch(e) { /* silent fail */ }
+  } catch(e) { /* silent */ }
 }
 
-// Init on load
-window.addEventListener('DOMContentLoaded', () => {
-  if (!sessionStorage.getItem('c_visited_prev')) {
-    notifyVisitor();
-    sessionStorage.setItem('c_visited_prev', '1');
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async () => {
+  const myNum = await initVisitorCounter();
+  if (!sessionStorage.getItem('c_notified')) {
+    notifyVisitor(myNum);
+    sessionStorage.setItem('c_notified', '1');
   }
 });
 </script>

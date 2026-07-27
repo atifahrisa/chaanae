@@ -1,1806 +1,701 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chaanae — The Story of Life</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=IM+Fell+English:ital@0;1&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --black:    #050505;
-      --deep:     #0a0a0f;
-      --grey:     #1a1a2e;
-      --dim:      #2a2a3e;
-      --blood:    #8b0000;
-      --rust:     #c0392b;
-      --ember:    #e74c3c;
-      --fog:      rgba(255,255,255,0.06);
-      --mist:     rgba(255,255,255,0.12);
-      --cream:    #d4c5b0;
-      --gold:     #c9a84c;
-      --text:     #b0a090;
-      --glow:     rgba(200,160,76,0.35);
-    }
-
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-
-    body {
-      font-family: 'Share Tech Mono', monospace;
-      background: var(--black);
-      color: var(--cream);
-      overflow-x: hidden;
-      cursor: default;
-    }
-
-    /* ════════════════════════════════
-       SCREEN SYSTEM
-    ════════════════════════════════ */
-    .screen {
-      display: none;
-      min-height: 100vh;
-      position: relative;
-    }
-    .screen.active { display: flex; }
-
-    /* ════════════════════════════════
-       SCANLINES OVERLAY (global)
-    ════════════════════════════════ */
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
-      pointer-events: none;
-      z-index: 9998;
-    }
-
-    /* CRT flicker */
-    @keyframes flicker {
-      0%,100%  { opacity:1; }
-      92%      { opacity:1; }
-      93%      { opacity:.85; }
-      94%      { opacity:1; }
-      96%      { opacity:.9; }
-      97%      { opacity:1; }
-    }
-    body { animation: flicker 8s infinite; }
-
-    /* ════════════════════════════════
-       START SCREEN
-    ════════════════════════════════ */
-    #start-screen {
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    /* VIDEO BACKGROUND */
-    #bg-video {
-      position: absolute;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: 0;
-      opacity: 1;
-      filter: grayscale(10%) brightness(1.15) contrast(1.0);
-    }
-
-    /* Gradient overlay atas video */
-    .start-overlay {
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to right, rgba(5,5,5,0.75) 0%, rgba(5,5,5,0.30) 55%, rgba(5,5,5,0.05) 100%),
-        linear-gradient(to top, rgba(5,5,5,0.55) 0%, transparent 30%);
-      z-index: 1;
-    }
-
-    .start-content {
-      position: relative;
-      z-index: 2;
-      padding: clamp(3rem,8vw,6rem) clamp(2rem,6vw,5rem);
-      max-width: 680px;
-    }
-
-    /* Title area */
-    .game-eyebrow {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: clamp(.65rem,.9vw,.8rem);
-      letter-spacing: .35em;
-      text-transform: uppercase;
-      color: var(--gold);
-      opacity: 0;
-      animation: fadeLeft .7s .3s forwards;
-      margin-bottom: 1.2rem;
-      display: flex;
-      align-items: center;
-      gap: .8rem;
-    }
-    .game-eyebrow::before {
-      content: '';
-      display: block;
-      width: 32px; height: 1px;
-      background: var(--gold);
-    }
-
-    .game-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(3.5rem, 10vw, 8rem);
-      line-height: .9;
-      color: var(--cream);
-      opacity: 0;
-      animation: fadeLeft .7s .5s forwards;
-      margin-bottom: .3rem;
-      text-shadow: 0 0 60px rgba(200,160,76,0.3);
-      letter-spacing: .03em;
-    }
-
-    .game-subtitle {
-      font-family: 'IM Fell English', serif;
-      font-style: italic;
-      font-size: clamp(.9rem, 1.5vw, 1.2rem);
-      color: var(--text);
-      opacity: 0;
-      animation: fadeLeft .7s .7s forwards;
-      margin-bottom: 3.5rem;
-      letter-spacing: .08em;
-    }
-
-    /* MENU BUTTONS */
-    .menu-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: .3rem;
-      opacity: 0;
-      animation: fadeLeft .7s 1s forwards;
-    }
-
-    .menu-item {
-      position: relative;
-    }
-
-    .menu-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-      letter-spacing: .12em;
-      color: var(--text);
-      text-align: left;
-      padding: .4rem 0 .4rem 2.2rem;
-      position: relative;
-      transition: color .2s, transform .2s;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      outline: none;
-    }
-
-    .menu-btn::before {
-      content: '▶';
-      position: absolute;
-      left: 0;
-      font-size: .8em;
-      color: var(--rust);
-      opacity: 0;
-      transform: translateX(-6px);
-      transition: opacity .2s, transform .2s;
-    }
-
-    .menu-btn:hover {
-      color: var(--cream);
-      transform: translateX(8px);
-    }
-    .menu-btn:hover::before {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .menu-btn.selected,
-    .menu-btn:focus {
-      color: var(--gold);
-    }
-    .menu-btn.selected::before,
-    .menu-btn:focus::before {
-      opacity: 1;
-      transform: translateX(0);
-      color: var(--gold);
-    }
-
-    /* Glow line bawah */
-    .menu-btn::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 2.2rem;
-      width: 0; height: 1px;
-      background: var(--gold);
-      transition: width .3s;
-    }
-    .menu-btn:hover::after { width: 60%; }
-
-    /* Press any key */
-    .press-any {
-      position: absolute;
-      bottom: 3rem; right: 4rem;
-      z-index: 2;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .75rem;
-      letter-spacing: .2em;
-      color: var(--text);
-      opacity: 0;
-      animation: fadeIn .5s 1.8s forwards, blink 2s 2s infinite;
-      text-transform: uppercase;
-    }
-    @keyframes blink {
-      0%,100% { opacity:.7; }
-      50%      { opacity:.2; }
-    }
-
-    /* Version tag */
-    .version-tag {
-      position: absolute;
-      bottom: 1.5rem; left: clamp(2rem,6vw,5rem);
-      z-index: 2;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .2em;
-      color: rgba(176,160,144,.35);
-    }
-
-    /* ════════════════════════════════
-       OPTIONS SCREEN
-    ════════════════════════════════ */
-    #options-screen {
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
-      background:
-        radial-gradient(ellipse at 70% 50%, rgba(139,0,0,.12) 0%, transparent 60%),
-        var(--deep);
-      padding: clamp(3rem,8vw,6rem) clamp(2rem,6vw,5rem);
-    }
-
-    .opt-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 3rem;
-    }
-
-    .back-btn {
-      background: none;
-      border: 1px solid rgba(200,160,76,.3);
-      color: var(--gold);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .75rem;
-      letter-spacing: .2em;
-      padding: .5rem 1rem;
-      cursor: pointer;
-      transition: all .2s;
-      text-transform: uppercase;
-    }
-    .back-btn:hover {
-      background: rgba(200,160,76,.1);
-      border-color: var(--gold);
-    }
-
-    .opt-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(2rem,5vw,3.5rem);
-      color: var(--cream);
-      letter-spacing: .1em;
-    }
-
-    .opt-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      max-width: 800px;
-      width: 100%;
-    }
-
-    @media (max-width:600px) { .opt-grid { grid-template-columns: 1fr; } }
-
-    .opt-card {
-      border: 1px solid rgba(200,160,76,.2);
-      background: rgba(255,255,255,.03);
-      padding: 2.5rem 2rem;
-      cursor: pointer;
-      transition: all .3s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .opt-card::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(200,160,76,.06) 0%, transparent 60%);
-      opacity: 0;
-      transition: opacity .3s;
-    }
-    .opt-card:hover::before { opacity: 1; }
-    .opt-card:hover {
-      border-color: rgba(200,160,76,.5);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 20px rgba(200,160,76,.08);
-    }
-
-    .opt-card-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      display: block;
-    }
-
-    .opt-card-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(1.5rem,3vw,2rem);
-      letter-spacing: .1em;
-      color: var(--gold);
-      margin-bottom: .5rem;
-    }
-
-    .opt-card-desc {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .78rem;
-      color: var(--text);
-      line-height: 1.7;
-      letter-spacing: .04em;
-    }
-
-    /* ════════════════════════════════
-       INTRODUCTION SCREEN
-    ════════════════════════════════ */
-    #intro-screen {
-      flex-direction: column;
-      background: var(--black);
-      padding: 0;
-    }
-
-    .intro-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(5,5,5,.92);
-      border-bottom: 1px solid rgba(200,160,76,.15);
-      padding: .8rem clamp(1.5rem,5vw,4rem);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      backdrop-filter: blur(8px);
-    }
-
-    .intro-topbar .logo-sm {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.2rem;
-      letter-spacing: .15em;
-      color: var(--gold);
-    }
-
-    .intro-body {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: clamp(3rem,6vw,5rem) clamp(1.5rem,4vw,3rem);
-      width: 100%;
-    }
-
-    /* Hero */
-    .intro-hero {
-      border-left: 3px solid var(--rust);
-      padding-left: 2rem;
-      margin-bottom: 4rem;
-    }
-
-    .intro-eyebrow {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .7rem;
-      letter-spacing: .3em;
-      color: var(--rust);
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-
-    .intro-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(3rem,8vw,6rem);
-      color: var(--cream);
-      line-height: .9;
-      letter-spacing: .05em;
-      margin-bottom: .5rem;
-    }
-
-    .intro-tagline {
-      font-family: 'IM Fell English', serif;
-      font-style: italic;
-      font-size: clamp(1rem,1.8vw,1.3rem);
-      color: var(--text);
-      letter-spacing: .06em;
-    }
-
-    /* Sections */
-    .intro-section {
-      margin-bottom: 4rem;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity .6s, transform .6s;
-    }
-    .intro-section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .sec-tag {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .3em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: .8rem;
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-    }
-    .sec-tag::after {
-      content: '';
-      flex: 1;
-      max-width: 80px;
-      height: 1px;
-      background: rgba(200,160,76,.3);
-    }
-
-    .sec-heading {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(1.5rem,3vw,2.2rem);
-      color: var(--cream);
-      letter-spacing: .08em;
-      margin-bottom: 1.2rem;
-    }
-
-    .sec-body {
-      font-family: 'IM Fell English', serif;
-      font-size: clamp(.95rem,1.2vw,1.05rem);
-      line-height: 1.9;
-      color: var(--text);
-      margin-bottom: 1rem;
-    }
-
-    .highlight { color: var(--cream); font-weight: 600; }
-    .em-rust   { color: var(--ember); font-style: italic; }
-
-    .callout-block {
-      border: 1px solid rgba(200,160,76,.25);
-      background: rgba(200,160,76,.04);
-      padding: 1.5rem 2rem;
-      margin: 2rem 0;
-      position: relative;
-    }
-    .callout-block::before {
-      content: '//';
-      position: absolute;
-      top: -.6rem; left: 1rem;
-      background: var(--black);
-      padding: 0 .4rem;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .7rem;
-      color: var(--gold);
-      letter-spacing: .2em;
-    }
-    .callout-block p {
-      font-family: 'IM Fell English', serif;
-      font-style: italic;
-      font-size: clamp(1rem,1.4vw,1.15rem);
-      color: var(--cream);
-      line-height: 1.7;
-    }
-
-    /* Trait pills */
-    .trait-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .6rem;
-      margin: 1.2rem 0;
-    }
-    .trait {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .75rem;
-      letter-spacing: .1em;
-      color: var(--text);
-      border: 1px solid rgba(176,160,144,.25);
-      padding: .35rem .9rem;
-      text-transform: uppercase;
-      transition: all .2s;
-    }
-    .trait:hover {
-      border-color: var(--gold);
-      color: var(--gold);
-      background: rgba(200,160,76,.06);
-    }
-
-    /* Quest cards */
-    .quest-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-
-    .quest-item {
-      border: 1px solid rgba(200,160,76,.18);
-      background: rgba(255,255,255,.02);
-      padding: 1.4rem 1.2rem;
-      transition: all .25s;
-      cursor: default;
-    }
-    .quest-item:hover {
-      border-color: rgba(200,160,76,.4);
-      background: rgba(200,160,76,.05);
-      transform: translateY(-3px);
-    }
-    .quest-icon {
-      font-size: 1.6rem;
-      display: block;
-      margin-bottom: .6rem;
-    }
-    .quest-name {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .75rem;
-      letter-spacing: .08em;
-      color: var(--cream);
-      text-transform: uppercase;
-    }
-
-    /* Roblox games */
-    .games-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-
-    .game-card {
-      border: 1px solid rgba(192,57,43,.3);
-      background: rgba(192,57,43,.04);
-      padding: 1.5rem;
-      transition: all .25s;
-      text-decoration: none;
-      display: block;
-    }
-    .game-card:hover {
-      border-color: var(--ember);
-      background: rgba(231,76,60,.08);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(192,57,43,.2);
-    }
-    .game-tag-sm {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .2em;
-      color: var(--ember);
-      text-transform: uppercase;
-      margin-bottom: .4rem;
-    }
-    .game-title-card {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.3rem;
-      letter-spacing: .08em;
-      color: var(--cream);
-    }
-
-    /* Discord block */
-    .discord-block {
-      background: linear-gradient(135deg, #1a1c3a 0%, #2a2d5a 100%);
-      border: 1px solid rgba(88,101,242,.4);
-      padding: 2.5rem;
-      margin: 2rem 0;
-      position: relative;
-      overflow: hidden;
-    }
-    .discord-block::after {
-      content: '⌬';
-      position: absolute;
-      right: 2rem; top: 50%; transform: translateY(-50%);
-      font-size: 6rem;
-      opacity: .05;
-      color: #5865F2;
-    }
-    .discord-block .dc-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(1.4rem,2.5vw,2rem);
-      color: #fff;
-      letter-spacing: .08em;
-      margin-bottom: .8rem;
-    }
-    .discord-block p {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .82rem;
-      color: rgba(255,255,255,.7);
-      line-height: 1.7;
-      margin-bottom: .6rem;
-    }
-    .dc-price {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.5rem;
-      color: var(--gold);
-      letter-spacing: .05em;
-      margin: .8rem 0;
-    }
-    .dc-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .6rem;
-      background: #5865F2;
-      color: #fff;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .85rem;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      padding: .85rem 2rem;
-      text-decoration: none;
-      transition: all .2s;
-      border: none;
-      cursor: pointer;
-      margin-top: 1.2rem;
-    }
-    .dc-btn:hover {
-      background: #4752c4;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(88,101,242,.4);
-    }
-
-    /* Quote banner */
-    .quote-banner {
-      border-top: 1px solid rgba(200,160,76,.2);
-      border-bottom: 1px solid rgba(200,160,76,.2);
-      padding: 3rem 0;
-      text-align: center;
-      margin: 3rem 0;
-    }
-    .quote-banner blockquote {
-      font-family: 'IM Fell English', serif;
-      font-style: italic;
-      font-size: clamp(1.1rem,2vw,1.5rem);
-      color: var(--cream);
-      line-height: 1.6;
-      max-width: 600px;
-      margin: 0 auto 1rem;
-    }
-    .quote-banner cite {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .7rem;
-      letter-spacing: .2em;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
-
-    /* ════════════════════════════════
-       LINKS SCREEN
-    ════════════════════════════════ */
-    #links-screen {
-      flex-direction: column;
-      background: var(--black);
-      padding: 0;
-    }
-
-    .links-body {
-      max-width: 700px;
-      margin: 0 auto;
-      padding: clamp(3rem,6vw,5rem) clamp(1.5rem,4vw,3rem);
-      width: 100%;
-    }
-
-    .link-category {
-      margin-bottom: 3rem;
-    }
-
-    .link-cat-title {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .3em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 1rem;
-      padding-bottom: .6rem;
-      border-bottom: 1px solid rgba(200,160,76,.15);
-    }
-
-    .link-row {
-      display: flex;
-      flex-direction: column;
-      gap: .4rem;
-    }
-
-    .link-entry {
-      display: flex;
-      align-items: center;
-      gap: 1.2rem;
-      padding: 1rem 1.4rem;
-      border: 1px solid rgba(255,255,255,.06);
-      background: rgba(255,255,255,.02);
-      text-decoration: none;
-      color: var(--text);
-      transition: all .2s;
-      position: relative;
-      overflow: hidden;
-    }
-    .link-entry::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--rust);
-      transform: scaleY(0);
-      transition: transform .2s;
-    }
-    .link-entry:hover {
-      background: rgba(255,255,255,.05);
-      border-color: rgba(200,160,76,.25);
-      color: var(--cream);
-      transform: translateX(4px);
-    }
-    .link-entry:hover::before {
-      transform: scaleY(1);
-    }
-
-    .link-icon {
-      font-size: 1.3rem;
-      flex-shrink: 0;
-      width: 2rem;
-      text-align: center;
-    }
-    .link-info { flex: 1; }
-    .link-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.1rem;
-      letter-spacing: .1em;
-      color: var(--cream);
-      display: block;
-    }
-    .link-sub {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .68rem;
-      color: var(--text);
-      letter-spacing: .08em;
-    }
-    .link-arrow {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .7rem;
-      color: var(--gold);
-      opacity: 0;
-      transition: opacity .2s;
-    }
-    .link-entry:hover .link-arrow { opacity: 1; }
-
-    /* ════════════════════════════════
-       NOTIFICATION MODAL
-    ════════════════════════════════ */
-    #modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.85);
-      z-index: 9000;
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(6px);
-    }
-    #modal-overlay.open { display: flex; }
-
-    .modal-box {
-      background: var(--deep);
-      border: 1px solid rgba(200,160,76,.35);
-      max-width: 480px;
-      width: 90%;
-      padding: 3rem 2.5rem;
-      text-align: center;
-      position: relative;
-      animation: popUp .35s cubic-bezier(.34,1.56,.64,1);
-    }
-
-    .modal-box::before {
-      content: '⚠';
-      display: block;
-      font-size: 2rem;
-      color: var(--rust);
-      margin-bottom: 1rem;
-    }
-
-    .modal-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.8rem;
-      color: var(--cream);
-      letter-spacing: .1em;
-      margin-bottom: 1rem;
-    }
-
-    .modal-text {
-      font-family: 'IM Fell English', serif;
-      font-style: italic;
-      font-size: 1rem;
-      color: var(--text);
-      line-height: 1.7;
-      margin-bottom: 2rem;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: .8rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .modal-btn {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .8rem;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-      padding: .75rem 1.8rem;
-      border: none;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .modal-btn.primary {
-      background: var(--rust);
-      color: #fff;
-    }
-    .modal-btn.primary:hover {
-      background: var(--ember);
-      transform: translateY(-2px);
-    }
-    .modal-btn.secondary {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,.15);
-    }
-    .modal-btn.secondary:hover {
-      border-color: rgba(255,255,255,.35);
-      color: var(--cream);
-    }
-
-    @keyframes popUp {
-      from { opacity:0; transform:scale(.88) translateY(16px); }
-      to   { opacity:1; transform:scale(1) translateY(0); }
-    }
-
-    /* ════════════════════════════════
-       VISITOR TICKER (bottom left on start)
-    ════════════════════════════════ */
-    #visitor-strip {
-      position: absolute;
-      bottom: 3.5rem; left: clamp(2rem,6vw,5rem);
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      gap: .8rem;
-    }
-
-    .vdot {
-      width: 7px; height: 7px;
-      background: #4ade80;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #4ade80;
-      animation: pulseG 1.8s infinite;
-    }
-    @keyframes pulseG {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:.4; transform:scale(1.4); }
-    }
-    .vtext {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .15em;
-      color: rgba(176,160,144,.6);
-    }
-    .vnum {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.1rem;
-      color: var(--gold);
-    }
-
-    /* ════════════════════════════════
-       ANIMATIONS
-    ════════════════════════════════ */
-    @keyframes fadeLeft {
-      from { opacity:0; transform:translateX(-20px); }
-      to   { opacity:1; transform:translateX(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity:0; }
-      to   { opacity:1; }
-    }
-
-    /* Separator line */
-    .h-rule {
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(to right, rgba(200,160,76,.5), rgba(200,160,76,.1), transparent);
-      margin: 3rem 0;
-    }
-
-    /* Keyboard shortcut hint */
-    .kbd {
-      display: inline-block;
-      border: 1px solid rgba(255,255,255,.2);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      padding: .1rem .4rem;
-      border-radius: 2px;
-      color: var(--text);
-      vertical-align: middle;
-    }
-
-    /* Scroll indicator */
-    .scroll-hint {
-      text-align: center;
-      padding: 2rem 0;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .2em;
-      color: rgba(176,160,144,.3);
-      animation: blink 2.5s infinite;
-    }
-
-    /* ════════════════════════════════
-       MUSIC PLAYER BAR (top right)
-    ════════════════════════════════ */
-    #music-bar {
-      position: absolute;
-      top: 1.2rem; right: 1.5rem;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: .7rem;
-    }
-
-    .music-toggle {
-      background: rgba(5,5,5,.65);
-      border: 1px solid rgba(200,160,76,.35);
-      color: var(--gold);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .65rem;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-      padding: .45rem 1rem;
-      cursor: pointer;
-      transition: all .2s;
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      backdrop-filter: blur(6px);
-    }
-    .music-toggle:hover {
-      background: rgba(200,160,76,.15);
-      border-color: var(--gold);
-    }
-
-    .music-icon {
-      font-size: .9rem;
-      animation: spin 3s linear infinite;
-    }
-    .music-icon.paused { animation-play-state: paused; }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-
-    /* Equalizer bars */
-    .eq-bars {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 14px;
-    }
-    .eq-bar {
-      width: 3px;
-      background: var(--gold);
-      border-radius: 1px;
-      animation: eq 0.6s ease-in-out infinite alternate;
-    }
-    .eq-bar:nth-child(1) { animation-delay: 0s;    height: 8px; }
-    .eq-bar:nth-child(2) { animation-delay: .15s;  height: 14px; }
-    .eq-bar:nth-child(3) { animation-delay: .08s;  height: 6px; }
-    .eq-bar:nth-child(4) { animation-delay: .22s;  height: 11px; }
-    @keyframes eq {
-      from { transform: scaleY(.3); }
-      to   { transform: scaleY(1); }
-    }
-    .eq-bars.stopped .eq-bar { animation-play-state: paused; transform: scaleY(.3); }
-
-    /* YouTube iframe hidden */
-    #yt-player { position:absolute; top:-9999px; left:-9999px; width:1px; height:1px; pointer-events:none; }
-
-    /* Toast */
-    #toast-msg {
-      position: fixed;
-      bottom: 1.5rem; right: 1.5rem;
-      background: #0a0a0f;
-      color: #d4c5b0;
-      padding: .7rem 1.2rem;
-      border: 1px solid rgba(200,160,76,.4);
-      font-family: 'Share Tech Mono', monospace;
-      font-size: .75rem;
-      letter-spacing: .1em;
-      z-index: 9999;
-      opacity: 0;
-      transition: opacity .3s;
-      pointer-events: none;
-    }
-
-    @media (max-width:480px) {
-      .start-content { padding: 3rem 1.5rem; }
-      .press-any { right: 1.5rem; bottom: 2rem; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Chaanae — Roblox Dev &amp; Freelance Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=IM+Fell+English:ital@0;1&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --black:#050505; --deep:#0a0a0f; --grey:#1a1a2e; --dim:#2a2a3e;
+  --blood:#8b0000; --rust:#c0392b; --ember:#e74c3c;
+  --fog:rgba(255,255,255,.06); --mist:rgba(255,255,255,.12);
+  --cream:#d4c5b0; --gold:#c9a84c; --text:#b0a090;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Share Tech Mono',monospace;
+  background:var(--black); color:var(--cream);
+  overflow-x:hidden; cursor:default; min-height:100vh;
+}
+body::after{
+  content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);
+  pointer-events:none; z-index:9998;
+}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.86}94%{opacity:1}96%{opacity:.92}97%{opacity:1}}
+body{animation:flicker 9s infinite;}
+
+/* ============ GLOBAL BACKGROUND VIDEO (persists across every screen) ============ */
+#bg-video-wrap{position:fixed;inset:0;z-index:0;overflow:hidden;}
+#bg-video{width:100%;height:100%;object-fit:cover;filter:grayscale(15%) brightness(.55) contrast(1.05);}
+#bg-video-wrap::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(5,5,5,.72) 0%,rgba(5,5,5,.55) 40%,rgba(5,5,5,.85) 100%);
+}
+#bg-video-wrap.hidden{display:none;}
+
+/* ============ SCREEN SYSTEM ============ */
+.screen{display:none;min-height:100vh;position:relative;z-index:1;}
+.screen.active{display:flex;}
+
+/* ============ GLOBAL TOP CONTROLS (music + counter) ============ */
+#global-bar{
+  position:fixed; top:0; left:0; right:0; z-index:500;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem clamp(1.2rem,4vw,2.5rem);
+  pointer-events:none;
+}
+#global-bar > *{pointer-events:auto;}
+.brand-mark{
+  font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:.2em;
+  color:var(--gold); opacity:.85;
+}
+#music-bar{display:flex;align-items:center;gap:.7rem;}
+.music-toggle{
+  background:rgba(5,5,5,.65); border:1px solid rgba(200,160,76,.35); color:var(--gold);
+  font-family:'Share Tech Mono',monospace; font-size:.65rem; letter-spacing:.15em; text-transform:uppercase;
+  padding:.45rem 1rem; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:.5rem;
+  backdrop-filter:blur(6px);
+}
+.music-toggle:hover{background:rgba(200,160,76,.15);border-color:var(--gold);}
+.eq-bars{display:flex;align-items:flex-end;gap:2px;height:14px;}
+.eq-bar{width:3px;background:var(--gold);border-radius:1px;animation:eq .6s ease-in-out infinite alternate;}
+.eq-bar:nth-child(1){animation-delay:0s;height:8px;}
+.eq-bar:nth-child(2){animation-delay:.15s;height:14px;}
+.eq-bar:nth-child(3){animation-delay:.08s;height:6px;}
+.eq-bar:nth-child(4){animation-delay:.22s;height:11px;}
+@keyframes eq{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+.eq-bars.stopped .eq-bar{animation-play-state:paused;transform:scaleY(.3);}
+
+/* ============ NAV DOTS (bottom, mobile+desktop) ============ */
+#nav-dock{
+  position:fixed; bottom:1.4rem; left:50%; transform:translateX(-50%); z-index:500;
+  display:flex; gap:.4rem; background:rgba(5,5,5,.65); border:1px solid rgba(200,160,76,.25);
+  padding:.5rem; backdrop-filter:blur(8px);
+}
+.dock-btn{
+  background:none; border:none; color:var(--text); font-family:'Share Tech Mono',monospace;
+  font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; padding:.55rem .9rem;
+  cursor:pointer; transition:all .2s;
+}
+.dock-btn.on, .dock-btn:hover{color:var(--gold); background:rgba(200,160,76,.08);}
+
+/* ============ START SCREEN ============ */
+#start-screen{flex-direction:column;justify-content:center;align-items:flex-start;padding:0;}
+.start-content{position:relative;z-index:2;padding:clamp(3rem,8vw,6rem) clamp(1.4rem,6vw,5rem);max-width:720px;}
+.game-eyebrow{
+  font-size:clamp(.62rem,.9vw,.78rem); letter-spacing:.35em; text-transform:uppercase; color:var(--gold);
+  opacity:0; animation:fadeLeft .7s .25s forwards; margin-bottom:1.2rem; display:flex; align-items:center; gap:.8rem;
+}
+.game-eyebrow::before{content:'';display:block;width:32px;height:1px;background:var(--gold);}
+.game-title{
+  font-family:'Bebas Neue',sans-serif; font-size:clamp(3.2rem,11vw,7.5rem); line-height:.9; color:var(--cream);
+  opacity:0; animation:fadeLeft .7s .45s forwards; margin-bottom:.4rem; text-shadow:0 0 60px rgba(200,160,76,.3); letter-spacing:.03em;
+}
+.game-subtitle{
+  font-family:'IM Fell English',serif; font-style:italic; font-size:clamp(.85rem,1.6vw,1.15rem); color:var(--text);
+  opacity:0; animation:fadeLeft .7s .65s forwards; margin-bottom:2.4rem; letter-spacing:.05em; max-width:500px; line-height:1.6;
+}
+.role-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2.6rem;opacity:0;animation:fadeLeft .7s .8s forwards;}
+.role-tag{
+  font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--gold);
+  border:1px solid rgba(200,160,76,.35); padding:.4rem .85rem; background:rgba(200,160,76,.05);
+}
+.menu-list{list-style:none;display:flex;flex-direction:column;gap:.2rem;opacity:0;animation:fadeLeft .7s 1s forwards;}
+.menu-btn{
+  background:none;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1.7rem,4vw,2.6rem); letter-spacing:.12em; color:var(--text); text-align:left;
+  padding:.4rem 0 .4rem 2.2rem; position:relative; transition:color .2s,transform .2s; outline:none;
+}
+.menu-btn::before{
+  content:'▶'; position:absolute; left:0; font-size:.8em; color:var(--rust); opacity:0;
+  transform:translateX(-6px); transition:opacity .2s,transform .2s;
+}
+.menu-btn:hover{color:var(--cream);transform:translateX(8px);}
+.menu-btn:hover::before{opacity:1;transform:translateX(0);}
+.version-tag{position:absolute;bottom:1.4rem;left:clamp(1.4rem,6vw,5rem);z-index:2;font-size:.62rem;letter-spacing:.2em;color:rgba(176,160,144,.35);}
+#visitor-strip{position:absolute;bottom:3.4rem;left:clamp(1.4rem,6vw,5rem);z-index:2;display:flex;align-items:center;gap:.7rem;}
+.vdot{width:7px;height:7px;background:#4ade80;border-radius:50%;box-shadow:0 0 8px #4ade80;animation:pulseG 1.8s infinite;}
+@keyframes pulseG{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.vtext{font-size:.62rem;letter-spacing:.15em;color:rgba(176,160,144,.6);}
+.vnum{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--gold);}
+
+/* ============ SHARED BODY WRAP (about / portfolio / links) ============ */
+.page-body{max-width:960px;margin:0 auto;padding:clamp(6.5rem,10vw,8rem) clamp(1.3rem,4vw,3rem) 6rem;width:100%;}
+.page-hero{border-left:3px solid var(--rust);padding-left:1.8rem;margin-bottom:3.2rem;}
+.page-eyebrow{font-size:.68rem;letter-spacing:.3em;color:var(--rust);text-transform:uppercase;margin-bottom:.8rem;}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.6rem,7vw,5rem);color:var(--cream);line-height:.92;letter-spacing:.04em;margin-bottom:.6rem;}
+.page-lede{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(.95rem,1.6vw,1.15rem);color:var(--text);max-width:640px;line-height:1.7;}
+
+.section-block{margin-bottom:3.6rem;opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s;}
+.section-block.visible{opacity:1;transform:translateY(0);}
+.sec-tag{font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem;display:flex;align-items:center;gap:.6rem;}
+.sec-tag::after{content:'';flex:1;max-width:70px;height:1px;background:rgba(200,160,76,.3);}
+.sec-heading{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.4rem,3vw,2rem);color:var(--cream);letter-spacing:.06em;margin-bottom:1rem;}
+.sec-body{font-family:'IM Fell English',serif;font-size:clamp(.92rem,1.2vw,1.02rem);line-height:1.85;color:var(--text);margin-bottom:.9rem;}
+.highlight{color:var(--cream);font-weight:600;}
+.em-rust{color:var(--ember);font-style:italic;}
+.price-tag{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.05em;color:var(--gold);border:1px solid rgba(200,160,76,.35);padding:.3rem .9rem;margin:.6rem 0 1rem;}
+
+.callout-block{border:1px solid rgba(200,160,76,.25);background:rgba(200,160,76,.04);padding:1.3rem 1.7rem;margin:1.6rem 0;position:relative;}
+.callout-block::before{content:'//';position:absolute;top:-.6rem;left:1rem;background:var(--black);padding:0 .4rem;font-size:.65rem;color:var(--gold);letter-spacing:.2em;}
+.callout-block p{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(.92rem,1.3vw,1.05rem);color:var(--cream);line-height:1.7;}
+
+.h-rule{width:100%;height:1px;background:linear-gradient(to right,rgba(200,160,76,.5),rgba(200,160,76,.1),transparent);margin:2.6rem 0;}
+
+/* ============ PHOTO GRID (auto-detect, no instructional text) ============ */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.9rem;margin:1.4rem 0;}
+.photo-grid.single{grid-template-columns:minmax(0,360px);}
+.photo-frame{
+  position:relative;aspect-ratio:4/3;overflow:hidden;border:1px solid rgba(200,160,76,.2);
+  background:repeating-linear-gradient(135deg,rgba(255,255,255,.02) 0 10px,rgba(255,255,255,.04) 10px 20px);
+}
+.photo-frame img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .4s;}
+.photo-frame img.loaded{opacity:1;}
+.photo-frame .ph-fallback{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;color:rgba(200,160,76,.25);
+}
+.photo-frame.filled .ph-fallback{display:none;}
+.photo-cap{font-size:.62rem;letter-spacing:.08em;color:var(--text);margin-top:.4rem;text-transform:uppercase;opacity:.7;}
+
+/* ============ WORK CARDS (feature systems) ============ */
+.work-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.4rem 0;}
+.work-card{border:1px solid rgba(200,160,76,.18);background:rgba(255,255,255,.02);padding:0;overflow:hidden;transition:all .25s;}
+.work-card:hover{border-color:rgba(200,160,76,.4);transform:translateY(-3px);}
+.work-card .photo-frame{aspect-ratio:16/10;border:none;}
+.work-card-body{padding:1.1rem 1.2rem 1.3rem;}
+.work-card-tag{font-size:.62rem;letter-spacing:.2em;color:var(--ember);text-transform:uppercase;margin-bottom:.4rem;}
+.work-card-title{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.06em;color:var(--cream);}
+
+/* Collab strip */
+.collab-strip{display:flex;flex-wrap:wrap;gap:.8rem;margin:1.2rem 0 1.6rem;}
+.collab-chip{
+  font-size:.72rem;letter-spacing:.08em;color:var(--cream);border:1px solid rgba(255,255,255,.15);
+  padding:.5rem 1.1rem;background:rgba(255,255,255,.03);text-transform:uppercase;
+}
+.collab-chip b{color:var(--gold);}
+
+/* trait pills */
+.trait-grid{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.1rem 0;}
+.trait{font-size:.72rem;letter-spacing:.08em;color:var(--text);border:1px solid rgba(176,160,144,.25);padding:.35rem .85rem;text-transform:uppercase;transition:all .2s;}
+.trait:hover{border-color:var(--gold);color:var(--gold);background:rgba(200,160,76,.06);}
+
+/* quote */
+.quote-banner{border-top:1px solid rgba(200,160,76,.2);border-bottom:1px solid rgba(200,160,76,.2);padding:2.6rem 0;text-align:center;margin:2.6rem 0;}
+.quote-banner blockquote{font-family:'IM Fell English',serif;font-style:italic;font-size:clamp(1rem,2vw,1.35rem);color:var(--cream);line-height:1.6;max-width:600px;margin:0 auto 1rem;}
+.quote-banner cite{font-size:.66rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;}
+
+/* ============ LINKS / CONTACT ============ */
+.link-category{margin-bottom:2.6rem;}
+.link-cat-title{font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:.9rem;padding-bottom:.5rem;border-bottom:1px solid rgba(200,160,76,.15);}
+.link-row{display:flex;flex-direction:column;gap:.4rem;}
+.link-entry{
+  display:flex;align-items:center;gap:1.1rem;padding:.95rem 1.3rem;border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.02);text-decoration:none;color:var(--text);transition:all .2s;position:relative;overflow:hidden;
+}
+.link-entry::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--rust);transform:scaleY(0);transition:transform .2s;}
+.link-entry:hover{background:rgba(255,255,255,.05);border-color:rgba(200,160,76,.25);color:var(--cream);transform:translateX(4px);}
+.link-entry:hover::before{transform:scaleY(1);}
+.link-icon{font-size:1.25rem;flex-shrink:0;width:2rem;text-align:center;}
+.link-info{flex:1;}
+.link-name{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em;color:var(--cream);display:block;}
+.link-sub{font-size:.66rem;color:var(--text);letter-spacing:.06em;}
+.link-arrow{font-size:.68rem;color:var(--gold);opacity:0;transition:opacity .2s;}
+.link-entry:hover .link-arrow{opacity:1;}
+.wa-cta{display:flex;align-items:center;gap:.9rem;background:linear-gradient(135deg,#128c4a,#0d6b39);border:1px solid rgba(37,211,102,.5);padding:1.4rem 1.6rem;margin-bottom:1.4rem;text-decoration:none;transition:all .2s;}
+.wa-cta:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(18,140,74,.35);}
+.wa-cta .link-name{color:#fff;}
+.wa-cta .link-sub{color:rgba(255,255,255,.75);}
+
+.discord-block{background:linear-gradient(135deg,#1a1c3a 0%,#2a2d5a 100%);border:1px solid rgba(88,101,242,.4);padding:2.2rem;margin:1.4rem 0;position:relative;overflow:hidden;}
+.discord-block::after{content:'⌬';position:absolute;right:1.6rem;top:50%;transform:translateY(-50%);font-size:5.5rem;opacity:.05;color:#5865F2;}
+.discord-block .dc-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.3rem,2.5vw,1.8rem);color:#fff;letter-spacing:.06em;margin-bottom:.7rem;}
+.discord-block p{font-size:.8rem;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:.5rem;}
+.dc-btn{display:inline-flex;align-items:center;gap:.6rem;background:#5865F2;color:#fff;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;padding:.8rem 1.8rem;text-decoration:none;transition:all .2s;margin-top:1rem;}
+.dc-btn:hover{background:#4752c4;transform:translateY(-2px);}
+
+.back-btn{background:none;border:1px solid rgba(200,160,76,.3);color:var(--gold);font-size:.72rem;letter-spacing:.18em;padding:.55rem 1.1rem;cursor:pointer;transition:all .2s;text-transform:uppercase;text-decoration:none;display:inline-block;}
+.back-btn:hover{background:rgba(200,160,76,.1);border-color:var(--gold);}
+.scroll-hint{text-align:center;padding:2rem 0;font-size:.62rem;letter-spacing:.2em;color:rgba(176,160,144,.3);animation:blink 2.5s infinite;}
+@keyframes blink{0%,100%{opacity:.7}50%{opacity:.2}}
+@keyframes fadeLeft{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ============ MODALS / TOASTS ============ */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;justify-content:center;align-items:center;backdrop-filter:blur(6px);}
+#modal-overlay.open{display:flex;}
+.modal-box{background:var(--deep);border:1px solid rgba(200,160,76,.35);max-width:460px;width:90%;padding:2.6rem 2.2rem;text-align:center;position:relative;animation:popUp .35s cubic-bezier(.34,1.56,.64,1);}
+.modal-box::before{content:'♪';display:block;font-size:1.8rem;color:var(--gold);margin-bottom:.8rem;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--cream);letter-spacing:.1em;margin-bottom:.9rem;}
+.modal-text{font-family:'IM Fell English',serif;font-style:italic;font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1.8rem;}
+.modal-actions{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;}
+.modal-btn{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;padding:.7rem 1.6rem;border:none;cursor:pointer;transition:all .2s;}
+.modal-btn.primary{background:var(--rust);color:#fff;}
+.modal-btn.primary:hover{background:var(--ember);transform:translateY(-2px);}
+.modal-btn.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.15);}
+@keyframes popUp{from{opacity:0;transform:scale(.88) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+#toast-msg{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%);background:#0a0a0f;color:#d4c5b0;padding:.7rem 1.2rem;border:1px solid rgba(200,160,76,.4);font-size:.72rem;letter-spacing:.08em;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;}
+
+/* ============ MOBILE ============ */
+@media (max-width:640px){
+  #global-bar{padding:.9rem 1rem;}
+  .brand-mark{font-size:.8rem;}
+  .music-toggle{padding:.4rem .7rem;font-size:.6rem;}
+  #nav-dock{gap:.15rem;padding:.4rem;width:calc(100% - 1.6rem);justify-content:space-between;}
+  .dock-btn{padding:.5rem .5rem;font-size:.58rem;flex:1;text-align:center;}
+  .page-body{padding-top:6.2rem;}
+  .work-row,.photo-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));}
+  .start-content{padding:5rem 1.3rem 8rem;}
+  #visitor-strip,.version-tag{display:none;}
+}
+@media (min-width:641px){
+  .press-any{position:absolute;bottom:2.4rem;right:2.5rem;z-index:2;font-size:.7rem;letter-spacing:.2em;color:var(--text);opacity:0;animation:fadeIn .5s 1.6s forwards,blink 2s 2s infinite;text-transform:uppercase;}
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
 </head>
 <body>
 
-<!-- ════════════════════════════════
-     START SCREEN
-════════════════════════════════ -->
-<section id="start-screen" class="screen active">
-
-  <!-- VIDEO BACKGROUND -->
+<!-- GLOBAL BACKGROUND VIDEO — shared by every screen -->
+<div id="bg-video-wrap">
+  <!-- Upload your looping background clip as: assets/bg/bgvideo.mp4 -->
   <video id="bg-video" autoplay muted loop playsinline>
-    <source src="bgvideo.mp4" type="video/mp4">
+    <source src="assets/bg/bgvideo.mp4" type="video/mp4">
   </video>
+</div>
 
-  <!-- Overlay gelap -->
-  <div class="start-overlay"></div>
+<!-- GLOBAL TOP BAR: brand + music toggle, visible on every screen -->
+<div id="global-bar">
+  <span class="brand-mark">CHAANAE</span>
+  <div id="music-bar">
+    <div class="eq-bars stopped" id="eq-bars">
+      <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+    </div>
+    <button class="music-toggle" id="music-btn" onclick="toggleMusic()">
+      <span id="music-label">PUTAR MUSIK</span>
+    </button>
+  </div>
+</div>
 
-  <!-- Content menu -->
+<!-- GLOBAL BOTTOM NAV DOCK — visible on every screen -->
+<nav id="nav-dock">
+  <button class="dock-btn" data-target="start-screen" onclick="goTo('start-screen')">HOME</button>
+  <button class="dock-btn" data-target="about-screen" onclick="goTo('about-screen')">TENTANG</button>
+  <button class="dock-btn" data-target="portfolio-screen" onclick="goTo('portfolio-screen')">PORTOFOLIO</button>
+  <button class="dock-btn" data-target="links-screen" onclick="goTo('links-screen')">KONTAK</button>
+</nav>
+
+<!-- Background music (auto-attempts to play, falls back to tap-to-start) -->
+<!-- Upload your track as: assets/audio/theme.mp3 -->
+<audio id="bg-audio" loop preload="auto">
+  <source src="assets/audio/theme.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Toast -->
+<div id="toast-msg"></div>
+
+<!-- ══════════════════ START SCREEN ══════════════════ -->
+<section id="start-screen" class="screen active">
   <div class="start-content">
-    <div class="game-eyebrow">THE STORY LIFE · 2026</div>
-
+    <div class="game-eyebrow">ROBLOX DEVELOPER · FREELANCE · 2026</div>
     <h1 class="game-title">CHAANAE</h1>
-    <p class="game-subtitle">— Cerita tentang seekor platipus yang bertahan hidup sampai detik ini —</p>
+    <p class="game-subtitle">Freelancer remote yang hidup di dunia Roblox — dari script, 3D model, sampai peta wisata Sulawesi yang dibangun ulang jadi map game.</p>
+
+    <div class="role-tags">
+      <span class="role-tag">Roblox Scripter</span>
+      <span class="role-tag">3D Modeler</span>
+      <span class="role-tag">Map Builder</span>
+      <span class="role-tag">Live Streamer</span>
+      <span class="role-tag">English Tutor</span>
+    </div>
 
     <ul class="menu-list" role="menu">
-      <li class="menu-item">
-        <button class="menu-btn" onclick="goTo('intro-screen')" role="menuitem">
-          START
-        </button>
-      </li>
-      <li class="menu-item">
-        <button class="menu-btn" onclick="goTo('options-screen')" role="menuitem">
-          OPTIONS
-        </button>
-      </li>
-      <li class="menu-item">
-        <button class="menu-btn" onclick="showExitModal()" role="menuitem">
-          EXIT
-        </button>
-      </li>
+      <li><button class="menu-btn" onclick="goTo('portfolio-screen')" role="menuitem">LIHAT PORTOFOLIO</button></li>
+      <li><button class="menu-btn" onclick="goTo('about-screen')" role="menuitem">TENTANG SAYA</button></li>
+      <li><button class="menu-btn" onclick="goTo('links-screen')" role="menuitem">HUBUNGI SAYA</button></li>
     </ul>
   </div>
 
-  <!-- Visitor counter -->
   <div id="visitor-strip">
     <div class="vdot"></div>
-    <span class="vtext">VISITOR</span>
+    <span class="vtext">PENGUNJUNG KE-</span>
     <span class="vnum" id="vnum">—</span>
-    <span class="vtext">OF</span>
-    <span class="vnum" id="vtotal">—</span>
   </div>
 
-  <!-- Music bar top right -->
-  <div id="music-bar">
-    <div class="eq-bars stopped" id="eq-bars">
-      <div class="eq-bar"></div>
-      <div class="eq-bar"></div>
-      <div class="eq-bar"></div>
-      <div class="eq-bar"></div>
-    </div>
-    <button class="music-toggle" id="music-btn" onclick="toggleMusic()">
-      <span class="music-icon paused" id="music-icon">♪</span>
-      <span id="music-label">PLAY MUSIC</span>
-    </button>
-  </div>
-
-  <!-- YouTube hidden player -->
-  <div id="yt-player"></div>
-
-  <!-- Press any key hint -->
-  <p class="press-any">[ Use arrow keys or click to navigate ]</p>
-
-  <!-- Version -->
-  <p class="version-tag">VER. 2026.05 · BUILD PLATYPUS</p>
-
+  <p class="press-any">[ Klik menu untuk mulai ]</p>
+  <p class="version-tag">BUILD 2026.07 · PLATYPUS</p>
 </section>
 
-<!-- Toast notif -->
-<div id="toast-msg"></div>
+<!-- ══════════════════ ABOUT SCREEN ══════════════════ -->
+<section id="about-screen" class="screen">
+  <div class="page-body">
+    <div class="page-hero">
+      <div class="page-eyebrow">FILE #001 — TENTANG</div>
+      <h1 class="page-title">SIAPA ITU CHAANAE?</h1>
+      <p class="page-lede">Bukan vampir, bukan alien — cuma platipus yang kerja remote, sabar sama deadline, dan nggak pernah cuma fokus satu hal.</p>
+    </div>
 
-<!-- ════════════════════════════════
-     OPTIONS SCREEN
-════════════════════════════════ -->
-<section id="options-screen" class="screen">
-  <div class="opt-header">
-    <button class="back-btn" onclick="goTo('start-screen')">← BACK</button>
-    <h2 class="opt-title">OPTIONS</h2>
-  </div>
-
-  <div class="opt-grid">
-    <div class="opt-card" onclick="goTo('intro-screen')">
-      <span class="opt-card-icon">📁</span>
-      <div class="opt-card-title">INTRODUCTION</div>
-      <p class="opt-card-desc">
-        File lengkap tentang siapa Chaanae.<br>
-        Identitas, perjalanan, side quest,<br>
-        komunitas, dan kreasi Roblox-nya.
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">CARA KERJA</div>
+      <h2 class="sec-heading">FULL REMOTE · FULL FOKUS ROBLOX</h2>
+      <p class="sec-body">
+        Sekarang saya <span class="highlight">fokus kerja freelance remote</span> di dunia Roblox — scripting, 3D modeling,
+        sampai bikin map. Semua dikerjakan dari rumah, komunikasi lewat Discord atau WhatsApp, hasil dikirim sesuai brief.
       </p>
-    </div>
-    <div class="opt-card" onclick="goTo('links-screen')">
-      <span class="opt-card-icon">🔗</span>
-      <div class="opt-card-title">LINKS</div>
-      <p class="opt-card-desc">
-        Semua pintu menuju Chaanae.<br>
-        Discord, Instagram, TikTok,<br>
-        Saweria, Roblox games, dan lainnya.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     INTRODUCTION SCREEN
-════════════════════════════════ -->
-<section id="intro-screen" class="screen">
-
-  <!-- Top bar -->
-  <div class="intro-topbar">
-    <span class="logo-sm">CHAANAE // THE PLATYPUS FILES</span>
-    <button class="back-btn" onclick="goTo('start-screen')">← MENU</button>
-  </div>
-
-  <div class="intro-body">
-
-    <!-- Hero -->
-    <div class="intro-hero">
-      <div class="intro-eyebrow">FILE #001 — IDENTITY RECORD</div>
-      <h1 class="intro-name">CHAANAE</h1>
-      <p class="intro-tagline">bukan vampir. bukan alien. tapi — platipus.</p>
+      <p class="sec-body">Pernah kolaborasi bareng beberapa developer besar di komunitas Roblox:</p>
+      <div class="collab-strip">
+        <span class="collab-chip">Bekerja sama dengan <b>Neko Omen</b></span>
+        <span class="collab-chip">Bekerja sama dengan <b>Oziw Terla</b></span>
+      </div>
     </div>
 
-    <!-- Identity -->
-    <div class="intro-section" data-reveal>
-      <div class="sec-tag">FILE #001 — IDENTITAS</div>
-      <h2 class="sec-heading">SIAPA ITU CHAANAE?</h2>
+    <div class="h-rule"></div>
 
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">GAYA HIDUP</div>
+      <h2 class="sec-heading">SAYA PLATIPUS — DAN ITU BUKAN KELEMAHAN</h2>
       <div class="trait-grid">
-        <span class="trait">🦆 Bisa ini itu</span>
-        <span class="trait">🔀 Multi-quest</span>
+        <span class="trait">🦆 Multi-skill</span>
+        <span class="trait">🔀 Multi-project</span>
         <span class="trait">💪 Tetap survive</span>
         <span class="trait">🌙 Ambivert → Extrovert</span>
-        <span class="trait">🏔 Sekitar Maros</span>
-        <span class="trait">🍞 Jualan Roti Maros</span>
+        <span class="trait">🏔 Berbasis Maros</span>
+        <span class="trait">🍞 Bisnis keluarga: Roti Maros</span>
       </div>
-
       <p class="sec-body">
-        <span class="highlight">Anak pertama dari 3 bersaudara.</span>
-        Role di hidup: <span class="highlight">tulang punggung keluarga</span>.
-        Skin yang dipakai: <span class="em-rust">Wonder Woman versi capek tapi kuat</span> ✨
+        Saya nggak pernah cuma pegang satu kerjaan. Bukan karena nggak bisa fokus — tapi karena begini caranya
+        semua bisa selesai <span class="highlight">cepat, tenang, dan tepat waktu</span>.
       </p>
-
       <div class="callout-block">
-        <p>"Bikin adik-adik bisa sekolah dengan layak &amp; ibu bisa makan dengan tenang."</p>
+        <p>"Nggak konsisten itu cuma kelihatannya. Aslinya, ini caraku pangkas waktu dan kerjain semua tanpa buru-buru."</p>
       </div>
-
       <p class="sec-body">
-        Bisnis keluarga: <span class="highlight">Toko Istana Roti Maros</span> dan
-        <span class="highlight">Pelopor Roti Maros Karaengta</span> — bukan side quest.
-        Ini cara bertahan hidup.
+        Satu syaratnya cuma tiga: <span class="highlight">sabar, nggak buru-buru, dan mood lagi bagus</span>. Kalau tiga itu ada — semua bisa saya kerjakan.
       </p>
     </div>
 
-    <div class="h-rule"></div>
-
-    <!-- Aliran Hidup -->
-    <div class="intro-section" data-reveal>
-      <div class="sec-tag">FILE #002 — ALIRAN</div>
-      <h2 class="sec-heading">ALIRAN HIDUP CHAANAE</h2>
-
-      <p class="sec-body">
-        Kalau orang lain naik perahu, dia berenang.
-        Kalau orang lain pelan-pelan, dia kelempar ombak.
-      </p>
-
-      <p class="sec-body">
-        Perjuangannya <span class="highlight">kuat</span>.
-        Jalannya <span class="highlight">kadang nggak jelas</span>.
-        Tapi berhentinya? <span class="em-rust">nggak ada.</span>
-      </p>
-    </div>
-
-    <div class="h-rule"></div>
-
-    <!-- Side Quest -->
-    <div class="intro-section" data-reveal>
-      <div class="sec-tag">FILE #003 — SIDE QUEST</div>
-      <h2 class="sec-heading">SIDE-QUEST YANG PERNAH DIJALANIN</h2>
-
-      <p class="sec-body">
-        <span class="em-rust">"Bukan nggak konsisten. Aku cuma terlalu penasaran sama hidup."</span>
-      </p>
-
-      <div class="quest-row">
-        <div class="quest-item">
-          <span class="quest-icon">⛰️</span>
-          <span class="quest-name">Open Trip Pendakian</span>
-        </div>
-        <div class="quest-item">
-          <span class="quest-icon">📚</span>
-          <span class="quest-name">Ngajar Bahasa Inggris</span>
-        </div>
-        <div class="quest-item">
-          <span class="quest-icon">🍱</span>
-          <span class="quest-name">Produksi Makanan</span>
-        </div>
-        <div class="quest-item">
-          <span class="quest-icon">🎥</span>
-          <span class="quest-name">Live Streaming</span>
-        </div>
-        <div class="quest-item">
-          <span class="quest-icon">💻</span>
-          <span class="quest-name">Web Development</span>
-        </div>
-        <div class="quest-item">
-          <span class="quest-icon">🎮</span>
-          <span class="quest-name">Roblox Game Dev</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="h-rule"></div>
-
-    <!-- Discord -->
-    <div class="intro-section" data-reveal>
-      <div class="sec-tag">FILE #004 — KOMUNITAS</div>
-      <h2 class="sec-heading">DISCORD — GUDANG ASSET &amp; SCRIPT ROBLOX</h2>
-
-      <p class="sec-body">
-        Salah satu passion terbesar Chaanae adalah <span class="highlight">ngoding dan bikin game di Roblox</span>.
-        Dari situlah lahir komunitas Discord untuk berbagi asset &amp; script Roblox.
-      </p>
-
-      <div class="discord-block">
-        <div class="dc-title">CHAANAE'S ROBLOX ASSETS</div>
-        <p>Free asset gratis untuk semua · Premium asset open source</p>
-        <p>Akses seluruh koleksi premium:</p>
-        <div class="dc-price">Rp 300.000</div>
-        <p style="font-size:.75rem; opacity:.6;">Sekali bayar · Akses selamanya di server Discord</p>
-        <a href="https://discord.gg/yp3M7WSwTq" target="_blank" rel="noopener" class="dc-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.05a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-          JOIN DISCORD SEKARANG
-        </a>
-      </div>
-    </div>
-
-    <div class="h-rule"></div>
-
-    <!-- Roblox Games -->
-    <div class="intro-section" data-reveal>
-      <div class="sec-tag">FILE #005 — KREASI ROBLOX</div>
-      <h2 class="sec-heading">GAME ROBLOX BUATAN CHAANAE</h2>
-
-      <p class="sec-body">Bukan cuma main — Chaanae juga <span class="highlight">bikin dunianya sendiri</span>.</p>
-
-      <div class="games-list">
-        <a href="https://www.roblox.com/games/139737426461434/LEMBAH-LOHE" target="_blank" rel="noopener" class="game-card">
-          <div class="game-tag-sm">🏔 FEATURED MAP</div>
-          <div class="game-title-card">LEMBAH LOHE</div>
-        </a>
-        <a href="https://www.roblox.com/games/72890444139297/Around-Makassar" target="_blank" rel="noopener" class="game-card">
-          <div class="game-tag-sm">🌆 FEATURED MAP</div>
-          <div class="game-title-card">SEKITAR MAKASSAR</div>
-        </a>
-        <a href="https://www.roblox.com/games/122070909089085/BULU-SARAUNG" target="_blank" rel="noopener" class="game-card">
-          <div class="game-tag-sm">🗻 MAP</div>
-          <div class="game-title-card">BULU SARAUNG</div>
-        </a>
-        <a href="https://www.roblox.com/games/95364282684452/KAWASAN-WISATA-BANTIMURUNG" target="_blank" rel="noopener" class="game-card">
-          <div class="game-tag-sm">🦋 MAP</div>
-          <div class="game-title-card">BANTIMURUNG</div>
-        </a>
-        <a href="https://www.roblox.com/games/96460856391104/Indo-Laugh" target="_blank" rel="noopener" class="game-card">
-          <div class="game-tag-sm">😂 GAME</div>
-          <div class="game-title-card">INDO LAUGH</div>
-        </a>
-        <a href="https://www.roblox.com/games/79098665850292/Mount-Caca" target="_blank" rel="noopener" class="game-card">
-          <div class="game-tag-sm">🏕 MAP</div>
-          <div class="game-title-card">MOUNT CACA</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Quote penutup -->
     <div class="quote-banner">
-      <blockquote>
-        "Chaanae mungkin belum nemu satu jawaban tentang hidupnya.<br>
-        Tapi satu hal pasti: dia nggak pernah berhenti nyoba."
-      </blockquote>
-      <cite>— The Platypus Files, 2026</cite>
+      <blockquote>"Chaanae mungkin belum nemu satu jawaban tentang hidupnya.<br>Tapi satu hal pasti: dia nggak pernah berhenti nyoba."</blockquote>
+      <cite>— Chaanae, 2026</cite>
     </div>
 
-    <p class="sec-body" style="text-align:center; margin-bottom:.5rem;">
-      Kalau kamu sampai di bagian ini — kamu udah kenal Chaanae lebih dari kebanyakan orang. 🤝
-    </p>
-    <p class="sec-body" style="text-align:center; font-family:'Caveat',cursive; font-size:1.2rem; color:var(--ember);">
-      Tenang, aku capek… tapi masih hidup. ☕
-    </p>
-
-    <div style="text-align:center; margin-top:2rem; padding-bottom:1rem;">
-      <button class="back-btn" onclick="goTo('links-screen')" style="margin-right:.8rem;">
-        🔗 CEK SEMUA LINK →
-      </button>
-      <button class="back-btn" onclick="goTo('start-screen')">
-        ← MENU UTAMA
-      </button>
+    <div style="text-align:center;">
+      <button class="back-btn" onclick="goTo('portfolio-screen')">📁 LIHAT PORTOFOLIO →</button>
     </div>
-
     <div class="scroll-hint">— END OF FILE —</div>
-
   </div>
 </section>
 
-<!-- ════════════════════════════════
-     LINKS SCREEN
-════════════════════════════════ -->
-<section id="links-screen" class="screen">
-
-  <div class="intro-topbar">
-    <span class="logo-sm">CHAANAE // LINK DIRECTORY</span>
-    <button class="back-btn" onclick="goTo('start-screen')">← MENU</button>
-  </div>
-
-  <div class="links-body">
-
-    <div style="margin-bottom:3rem;">
-      <div class="intro-eyebrow" style="font-family:'Share Tech Mono',monospace; font-size:.65rem; letter-spacing:.3em; color:var(--rust); text-transform:uppercase; margin-bottom:.8rem;">
-        ALL PORTALS — CLASSIFIED DIRECTORY
-      </div>
-      <h1 style="font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,6vw,4rem); color:var(--cream); letter-spacing:.08em; line-height:.9;">
-        LINK<br>DIRECTORY
-      </h1>
+<!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
+<section id="portfolio-screen" class="screen">
+  <div class="page-body">
+    <div class="page-hero">
+      <div class="page-eyebrow">FILE #002 — PORTOFOLIO &amp; JASA</div>
+      <h1 class="page-title">HASIL KARYA &amp; JASA</h1>
+      <p class="page-lede">Semua yang saya kerjakan untuk klien — dari model 3D sampai sistem game yang paling laku.</p>
     </div>
 
-    <!-- Social Media -->
+    <!-- 3D MODELING -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">3D MODELING</div>
+      <h2 class="sec-heading">MODEL 3D — NPC &amp; ASSET GAME</h2>
+      <p class="sec-body">Bikin karakter NPC, prop, dan model 3D lain sesuai brief klien, siap pakai untuk Roblox atau engine lain.</p>
+      <span class="price-tag">Rp 5.000 – Rp 30.000 / model</span>
+      <div class="photo-grid">
+        <figure class="photo-frame"><img src="assets/img/3d-1.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">◆</span></figure>
+        <figure class="photo-frame"><img src="assets/img/3d-2.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">◆</span></figure>
+        <figure class="photo-frame"><img src="assets/img/3d-3.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">◆</span></figure>
+      </div>
+    </div>
+
+    <div class="h-rule"></div>
+
+    <!-- FEATURE SYSTEMS -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">SISTEM &amp; SCRIPT</div>
+      <h2 class="sec-heading">FITUR PALING LAKU — TOP MARKOTOP</h2>
+      <p class="sec-body">Tiga sistem yang paling sering dipesan klien, sudah teruji dan siap dipasang ke game kamu.</p>
+      <div class="work-row">
+        <div class="work-card">
+          <div class="photo-frame"><img src="assets/img/feature-ojol.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🚕</span></div>
+          <div class="work-card-body">
+            <div class="work-card-tag">Sistem</div>
+            <div class="work-card-title">FITUR OJOL</div>
+          </div>
+        </div>
+        <div class="work-card">
+          <div class="photo-frame"><img src="assets/img/feature-fishing.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🎣</span></div>
+          <div class="work-card-body">
+            <div class="work-card-tag">Sistem</div>
+            <div class="work-card-title">FITUR MEMANCING</div>
+          </div>
+        </div>
+        <div class="work-card">
+          <div class="photo-frame"><img src="assets/img/feature-feedanimal.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🐾</span></div>
+          <div class="work-card-body">
+            <div class="work-card-tag">Sistem</div>
+            <div class="work-card-title">FITUR BERI MAKAN HEWAN</div>
+          </div>
+        </div>
+      </div>
+      <p class="sec-body">Selain itu, saya juga terima <span class="highlight">modifikasi script sesuai request</span> — kirim script kamu, saya sesuaikan sama kebutuhan.</p>
+    </div>
+
+    <div class="h-rule"></div>
+
+    <!-- LANDSCAPING MAP -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">MAP BUILDER</div>
+      <h2 class="sec-heading">LANDSCAPING MAP ROBLOX</h2>
+      <p class="sec-body">Bangun ulang tempat nyata jadi map Roblox — lengkap dengan terrain, bangunan, dan detail lingkungan.</p>
+      <div class="photo-grid">
+        <figure class="photo-frame"><img src="assets/img/map-1.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🗺️</span></figure>
+        <figure class="photo-frame"><img src="assets/img/map-2.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🗺️</span></figure>
+        <figure class="photo-frame"><img src="assets/img/map-3.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🗺️</span></figure>
+      </div>
+      <p class="sec-body" style="margin-top:.8rem;">Beberapa map yang sudah rilis: <span class="highlight">Lembah Lohe</span>, <span class="highlight">Sekitar Makassar</span>, <span class="highlight">Bulu Saraung</span>, <span class="highlight">Bantimurung</span>, dan <span class="highlight">Mount Caca</span>.</p>
+    </div>
+
+    <div class="h-rule"></div>
+
+    <!-- LIVE STREAMING & TEACHING -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">AKTIVITAS LAIN</div>
+      <h2 class="sec-heading">LIVE STREAMING &amp; MENGAJAR BAHASA INGGRIS</h2>
+      <div class="work-row">
+        <div class="work-card">
+          <div class="photo-frame"><img src="assets/img/stream-1.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🎥</span></div>
+          <div class="work-card-body"><div class="work-card-tag">Streaming</div><div class="work-card-title">LIVE DI STREAM</div></div>
+        </div>
+        <div class="work-card">
+          <div class="photo-frame"><img src="assets/img/teach-1.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">📚</span></div>
+          <div class="work-card-body"><div class="work-card-tag">Tutoring</div><div class="work-card-title">MENGAJAR BAHASA INGGRIS</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="h-rule"></div>
+
+    <!-- DIGITAL INVITATION -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">WEB DEV</div>
+      <h2 class="sec-heading">UNDANGAN / UCAPAN DIGITAL (HTML)</h2>
+      <p class="sec-body">Bikin undangan atau ucapan digital custom pakai HTML, di-host lewat GitHub — link tinggal dibagikan.</p>
+      <div class="photo-grid single">
+        <figure class="photo-frame"><img src="assets/img/invite-1.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">💌</span></figure>
+      </div>
+    </div>
+
+    <div class="h-rule"></div>
+
+    <!-- COMPANION SERVICE -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">JASA LAIN</div>
+      <h2 class="sec-heading">TEMAN JALAN / EXPLORE BARENG</h2>
+      <p class="sec-body">Nemenin jalan-jalan atau explore tempat baru sekitar Maros dan Makassar.</p>
+      <div class="photo-grid">
+        <figure class="photo-frame"><img src="assets/img/companion-1.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🚶</span></figure>
+        <figure class="photo-frame"><img src="assets/img/companion-2.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🚶</span></figure>
+        <figure class="photo-frame"><img src="assets/img/companion-3.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">🚶</span></figure>
+      </div>
+    </div>
+
+    <div class="h-rule"></div>
+
+    <!-- ROBUX -->
+    <div class="section-block" data-reveal>
+      <div class="sec-tag">TOP UP</div>
+      <h2 class="sec-heading">JUAL ROBUX</h2>
+      <p class="sec-body">Top up Robux dengan harga bersaing — cek pricelist di bawah, order via WhatsApp atau Discord.</p>
+      <div class="photo-grid single">
+        <figure class="photo-frame"><img src="assets/img/robux-pricelist.jpg" alt="" onload="this.classList.add('loaded');this.parentElement.classList.add('filled')" onerror="this.remove()"><span class="ph-fallback">💰</span></figure>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:1rem;">
+      <button class="back-btn" onclick="goTo('links-screen')" style="margin-right:.7rem;">🔗 HUBUNGI SAYA →</button>
+      <button class="back-btn" onclick="goTo('start-screen')">← MENU UTAMA</button>
+    </div>
+    <div class="scroll-hint">— END OF FILE —</div>
+  </div>
+</section>
+
+<!-- ══════════════════ LINKS / CONTACT SCREEN ══════════════════ -->
+<section id="links-screen" class="screen">
+  <div class="page-body">
+    <div class="page-hero">
+      <div class="page-eyebrow">FILE #003 — KONTAK</div>
+      <h1 class="page-title">HUBUNGI CHAANAE</h1>
+      <p class="page-lede">Order, tanya-tanya, atau sekadar say hi — semua pintu ada di sini.</p>
+    </div>
+
+    <a href="https://wa.me/62895333631174" target="_blank" rel="noopener" class="wa-cta">
+      <span class="link-icon">💬</span>
+      <div class="link-info">
+        <span class="link-name">CHAT VIA WHATSAPP</span>
+        <span class="link-sub">0895-3336-31174 · Respon cepat untuk order</span>
+      </div>
+      <span class="link-arrow">→ CHAT</span>
+    </a>
+
+    <div class="discord-block">
+      <div class="dc-title">CHAANAE'S ROBLOX ASSETS</div>
+      <p>Free asset untuk semua · Premium asset open source</p>
+      <p>Diskusi order, script, dan asset paling cepat lewat sini.</p>
+      <a href="https://discord.gg/yp3M7WSwTq" target="_blank" rel="noopener" class="dc-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.05a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        JOIN DISCORD SEKARANG
+      </a>
+    </div>
+
     <div class="link-category">
       <div class="link-cat-title">// SOCIAL MEDIA</div>
       <div class="link-row">
         <a href="https://www.instagram.com/risaatifah/" target="_blank" rel="noopener" class="link-entry">
           <span class="link-icon">📸</span>
-          <div class="link-info">
-            <span class="link-name">INSTAGRAM</span>
-            <span class="link-sub">@risaatifah</span>
-          </div>
+          <div class="link-info"><span class="link-name">INSTAGRAM</span><span class="link-sub">@risaatifah</span></div>
           <span class="link-arrow">→ OPEN</span>
         </a>
         <a href="https://www.tiktok.com/@biasanyadipanggilchaa" target="_blank" rel="noopener" class="link-entry">
           <span class="link-icon">🎵</span>
-          <div class="link-info">
-            <span class="link-name">TIKTOK</span>
-            <span class="link-sub">@biasanyadipanggilchaa</span>
-          </div>
+          <div class="link-info"><span class="link-name">TIKTOK</span><span class="link-sub">@biasanyadipanggilchaa</span></div>
           <span class="link-arrow">→ OPEN</span>
         </a>
       </div>
     </div>
 
-    <!-- Support -->
     <div class="link-category">
       <div class="link-cat-title">// SUPPORT &amp; DONASI</div>
       <div class="link-row">
         <a href="https://saweria.co/risaatifah" target="_blank" rel="noopener" class="link-entry">
           <span class="link-icon">🎁</span>
-          <div class="link-info">
-            <span class="link-name">SAWERIA</span>
-            <span class="link-sub">saweria.co/risaatifah · Support Chaanae</span>
-          </div>
+          <div class="link-info"><span class="link-name">SAWERIA</span><span class="link-sub">saweria.co/risaatifah</span></div>
           <span class="link-arrow">→ OPEN</span>
         </a>
       </div>
     </div>
 
-    <!-- Discord & Community -->
     <div class="link-category">
-      <div class="link-cat-title">// KOMUNITAS</div>
-      <div class="link-row">
-        <a href="https://discord.gg/yp3M7WSwTq" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">💬</span>
-          <div class="link-info">
-            <span class="link-name">DISCORD</span>
-            <span class="link-sub">Chaanae's Roblox Assets · Free &amp; Premium</span>
-          </div>
-          <span class="link-arrow">→ JOIN</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Roblox Games -->
-    <div class="link-category">
-      <div class="link-cat-title">// ROBLOX GAMES</div>
-      <div class="link-row">
-        <a href="https://www.roblox.com/games/139737426461434/LEMBAH-LOHE" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">🏔</span>
-          <div class="link-info">
-            <span class="link-name">LEMBAH LOHE</span>
-            <span class="link-sub">Roblox Map · Featured</span>
-          </div>
-          <span class="link-arrow">→ PLAY</span>
-        </a>
-        <a href="https://www.roblox.com/games/72890444139297/Around-Makassar" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">🌆</span>
-          <div class="link-info">
-            <span class="link-name">SEKITAR MAKASSAR</span>
-            <span class="link-sub">Roblox Map · Featured</span>
-          </div>
-          <span class="link-arrow">→ PLAY</span>
-        </a>
-        <a href="https://www.roblox.com/games/122070909089085/BULU-SARAUNG" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">🗻</span>
-          <div class="link-info">
-            <span class="link-name">BULU SARAUNG</span>
-            <span class="link-sub">Roblox Map</span>
-          </div>
-          <span class="link-arrow">→ PLAY</span>
-        </a>
-        <a href="https://www.roblox.com/games/95364282684452/KAWASAN-WISATA-BANTIMURUNG" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">🦋</span>
-          <div class="link-info">
-            <span class="link-name">BANTIMURUNG</span>
-            <span class="link-sub">Roblox Map</span>
-          </div>
-          <span class="link-arrow">→ PLAY</span>
-        </a>
-        <a href="https://www.roblox.com/games/96460856391104/Indo-Laugh" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">😂</span>
-          <div class="link-info">
-            <span class="link-name">INDO LAUGH</span>
-            <span class="link-sub">Roblox Game</span>
-          </div>
-          <span class="link-arrow">→ PLAY</span>
-        </a>
-        <a href="https://www.roblox.com/games/79098665850292/Mount-Caca" target="_blank" rel="noopener" class="link-entry">
-          <span class="link-icon">🏕</span>
-          <div class="link-info">
-            <span class="link-name">MOUNT CACA</span>
-            <span class="link-sub">Roblox Map</span>
-          </div>
-          <span class="link-arrow">→ PLAY</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Kontak -->
-    <div class="link-category">
-      <div class="link-cat-title">// KONTAK</div>
+      <div class="link-cat-title">// KONTAK LAIN</div>
       <div class="link-row">
         <a href="mailto:atifahrisa@gmail.com" class="link-entry">
           <span class="link-icon">✉️</span>
-          <div class="link-info">
-            <span class="link-name">EMAIL</span>
-            <span class="link-sub">atifahrisa@gmail.com</span>
-          </div>
+          <div class="link-info"><span class="link-name">EMAIL</span><span class="link-sub">atifahrisa@gmail.com</span></div>
           <span class="link-arrow">→ SEND</span>
         </a>
       </div>
     </div>
 
-    <div style="text-align:center; padding: 2rem 0;">
-      <button class="back-btn" onclick="goTo('intro-screen')" style="margin-right:.8rem;">
-        📁 INTRODUCTION →
-      </button>
-      <button class="back-btn" onclick="goTo('start-screen')">
-        ← MENU UTAMA
-      </button>
+    <div style="text-align:center;padding:1rem 0 0;">
+      <button class="back-btn" onclick="goTo('portfolio-screen')" style="margin-right:.7rem;">📁 PORTOFOLIO →</button>
+      <button class="back-btn" onclick="goTo('start-screen')">← MENU UTAMA</button>
     </div>
-
     <div class="scroll-hint">— END OF DIRECTORY —</div>
   </div>
 </section>
 
-<!-- ════════════════════════════════
-     EXIT MODAL
-════════════════════════════════ -->
+<!-- Tap-to-enable-audio modal (shown only if autoplay is blocked by the browser) -->
 <div id="modal-overlay">
   <div class="modal-box">
-    <div class="modal-title">JANGAN PERGI DULU</div>
-    <p class="modal-text">
-      Hei, jangan keluar dulu — <em>let's talk first!</em><br><br>
-      Ada banyak hal menarik yang belum kamu temukan di sini.
-      Siapa tahu, ada sesuatu yang bikin kamu betah. 👀
-    </p>
+    <div class="modal-title">MUSIK SIAP DIPUTAR</div>
+    <p class="modal-text">Browser kamu butuh satu klik dulu sebelum musik bisa otomatis jalan. Klik tombol di bawah ya!</p>
     <div class="modal-actions">
-      <button class="modal-btn primary" onclick="closeModal(); goTo('intro-screen')">
-        KENALAN DULU →
-      </button>
-      <button class="modal-btn secondary" onclick="closeModal()">
-        TETAP DI SINI
-      </button>
+      <button class="modal-btn primary" onclick="closeModal(); startAudio();">🔊 PUTAR MUSIK</button>
+      <button class="modal-btn secondary" onclick="closeModal()">NANTI SAJA</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ════════════════════════════════
-   SCREEN NAVIGATION
-   FIX: closing brace was missing — caused ALL JS to fail
-════════════════════════════════ */
-function goTo(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(screenId);
-  if (!target) return;
+/* ============ NAVIGATION ============ */
+function goTo(screenId){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById(screenId);
+  if(!target) return;
   target.classList.add('active');
-  window.scrollTo(0, 0);
-
-  // Trigger scroll reveal when entering intro screen
-  if (screenId === 'intro-screen') {
-    setTimeout(revealSections, 100);
-  }
-} // ← THIS WAS MISSING IN THE ORIGINAL — root cause of all bugs
-
-/* ════════════════════════════════
-   MODAL EXIT
-════════════════════════════════ */
-function showExitModal() {
-  document.getElementById('modal-overlay').classList.add('open');
+  window.scrollTo(0,0);
+  document.querySelectorAll('.dock-btn').forEach(b=>b.classList.toggle('on', b.dataset.target===screenId));
+  if(screenId!=='start-screen') setTimeout(revealSections,80);
 }
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-}
-document.getElementById('modal-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.querySelectorAll('.dock-btn')[0].classList.add('on');
 
-/* ════════════════════════════════
-   SCROLL REVEAL
-════════════════════════════════ */
-function revealSections() {
-  document.querySelectorAll('[data-reveal]').forEach((el, i) => {
-    setTimeout(() => el.classList.add('visible'), i * 150);
+function revealSections(){
+  document.querySelectorAll('[data-reveal]:not(.visible)').forEach((el,i)=>{
+    setTimeout(()=>el.classList.add('visible'), i*120);
   });
 }
 
-/* ════════════════════════════════
-   VIDEO SETUP
-════════════════════════════════ */
-const video = document.getElementById('bg-video');
-if (video) {
-  video.addEventListener('loadeddata', () => { video.playbackRate = 1.6; });
-  video.addEventListener('canplay',    () => { video.playbackRate = 1.6; });
-  video.addEventListener('error', () => {
-    video.style.display = 'none';
-    document.getElementById('start-screen').style.background =
-      'radial-gradient(ellipse at 20% 60%, rgba(139,0,0,.25) 0%, transparent 55%), ' +
-      'radial-gradient(ellipse at 80% 30%, rgba(100,80,40,.15) 0%, transparent 50%), ' +
-      '#050505';
-  });
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this) closeModal();});
+document.addEventListener('keydown', e=>{if(e.key==='Escape') closeModal();});
+
+function showToast(msg){
+  const t=document.getElementById('toast-msg'); if(!t) return;
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._timer); t._timer=setTimeout(()=>{t.style.opacity='0';},2600);
 }
 
-/* ════════════════════════════════
-   VISITOR COUNTER — jsonbin.io
-════════════════════════════════ */
-const JSONBIN_ID  = '6a0b91d16877513b27940d64';
-const JSONBIN_KEY = '$2a$10$Vol.KRtTJ6fobsZg.b5buuEIgoxkrYUF9Ky98tpI3/5S/aMo9Siye';
+/* ============ BACKGROUND VIDEO ============ */
+const video=document.getElementById('bg-video');
+if(video){
+  video.addEventListener('error', ()=>{ document.getElementById('bg-video-wrap').classList.add('hidden'); });
+}
 
-async function initVisitorCounter() {
-  const isNewSession = !sessionStorage.getItem('c_counted');
-  let myNum = 0;
-  let total = 0;
+/* ============ BACKGROUND MUSIC (autoplay attempt + fallback) ============ */
+const audio=document.getElementById('bg-audio');
+let musicPlaying=false;
 
-  try {
-    // Ambil data saat ini
-    const getRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
-      headers: { 'X-Master-Key': JSONBIN_KEY }
+function updateMusicUI(playing){
+  musicPlaying=playing;
+  document.getElementById('music-label').textContent = playing ? 'JEDA MUSIK' : 'PUTAR MUSIK';
+  document.getElementById('eq-bars').classList.toggle('stopped', !playing);
+}
+
+function startAudio(){
+  audio.play().then(()=>updateMusicUI(true)).catch(()=>updateMusicUI(false));
+}
+
+function toggleMusic(){
+  if(musicPlaying){ audio.pause(); updateMusicUI(false); }
+  else { startAudio(); }
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  // Try autoplay immediately; most browsers block audio-with-sound autoplay,
+  // so we show a one-tap prompt if it fails.
+  const p = audio.play();
+  if(p !== undefined){
+    p.then(()=>updateMusicUI(true)).catch(()=>{
+      updateMusicUI(false);
+      document.getElementById('modal-overlay').classList.add('open');
     });
-
-    if (!getRes.ok) throw new Error('jsonbin fetch failed: ' + getRes.status);
-
-    const getData = await getRes.json();
-    total = getData.record?.count || 0;
-
-    if (isNewSession) {
-      const newTotal = total + 1;
-      myNum = newTotal;
-
-      const putRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': JSONBIN_KEY
-        },
-        body: JSON.stringify({ count: newTotal })
-      });
-
-      if (!putRes.ok) throw new Error('jsonbin update failed: ' + putRes.status);
-
-      total = newTotal;
-      sessionStorage.setItem('c_counted', '1');
-      sessionStorage.setItem('c_mynum',   String(myNum));
-    } else {
-      myNum = parseInt(sessionStorage.getItem('c_mynum') || String(total), 10);
-    }
-
-  } catch(e) {
-    console.warn('Visitor counter fallback (localStorage):', e.message);
-    // Fallback: localStorage per-device
-    total = parseInt(localStorage.getItem('c_total_local') || '0', 10);
-    if (isNewSession) {
-      total++;
-      myNum = total;
-      localStorage.setItem('c_total_local', String(total));
-      sessionStorage.setItem('c_counted', '1');
-      sessionStorage.setItem('c_mynum',   String(myNum));
-    } else {
-      myNum = parseInt(sessionStorage.getItem('c_mynum') || String(total), 10);
-    }
   }
+});
 
-  animateCount('vnum',   myNum);
-  animateCount('vtotal', total);
-  return myNum;
+/* ============ VISITOR COUNTER (local only — no data leaves the visitor's browser) ============ */
+function initVisitorCounter(){
+  let total = parseInt(localStorage.getItem('chaanae_visits') || '0', 10);
+  if(!sessionStorage.getItem('chaanae_counted')){
+    total += 1;
+    localStorage.setItem('chaanae_visits', String(total));
+    sessionStorage.setItem('chaanae_counted','1');
+  }
+  animateCount('vnum', total);
 }
-
-// Animasi angka naik
-function animateCount(elId, target) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  const duration  = 1200;
-  const startTime = performance.now();
-  function step(now) {
-    const progress = Math.min((now - startTime) / duration, 1);
-    const ease     = 1 - Math.pow(1 - progress, 3);
-    el.textContent = Math.round(target * ease).toLocaleString('id-ID');
-    if (progress < 1) requestAnimationFrame(step);
+function animateCount(elId, target){
+  const el=document.getElementById(elId); if(!el) return;
+  const duration=1000, startTime=performance.now();
+  function step(now){
+    const progress=Math.min((now-startTime)/duration,1);
+    const ease=1-Math.pow(1-progress,3);
+    el.textContent=Math.round(target*ease).toLocaleString('id-ID');
+    if(progress<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
-
-/* ════════════════════════════════
-   YOUTUBE MUSIC PLAYER
-════════════════════════════════ */
-const YT_VIDEO_ID = 'eIQA6D9h6OQ';
-let ytPlayer    = null;
-let musicPlaying = false;
-let ytReady      = false;
-
-// Load YouTube IFrame API
-(function() {
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-})();
-
-// Callback dari YouTube API
-function onYouTubeIframeAPIReady() {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: YT_VIDEO_ID,
-    playerVars: {
-      autoplay: 0,
-      controls: 0,
-      loop: 1,
-      playlist: YT_VIDEO_ID,
-      mute: 0
-    },
-    events: {
-      onReady: () => { ytReady = true; },
-      onStateChange: (e) => {
-        if (e.data === YT.PlayerState.ENDED) ytPlayer.playVideo();
-      }
-    }
-  });
-}
-
-function toggleMusic() {
-  if (!ytReady || !ytPlayer) {
-    showToast('Player sedang loading, coba lagi sebentar…');
-    return;
-  }
-
-  const icon   = document.getElementById('music-icon');
-  const label  = document.getElementById('music-label');
-  const eqBars = document.getElementById('eq-bars');
-
-  if (!musicPlaying) {
-    ytPlayer.playVideo();
-    musicPlaying = true;
-    icon.classList.remove('paused');
-    label.textContent = 'MUTE';
-    eqBars.classList.remove('stopped');
-  } else {
-    ytPlayer.pauseVideo();
-    musicPlaying = false;
-    icon.classList.add('paused');
-    label.textContent = 'PLAY MUSIC';
-    eqBars.classList.add('stopped');
-  }
-}
-
-/* Toast helper */
-function showToast(msg) {
-  const t = document.getElementById('toast-msg');
-  if (!t) return;
-  t.textContent = msg;
-  t.style.opacity = '1';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
-}
-
-/* ════════════════════════════════
-   DISCORD WEBHOOK TRACKER
-════════════════════════════════ */
-const WEBHOOK_URL = 'https://discordapp.com/api/webhooks/1461067879679000620/I1cEocjMoJfqBBvUokf5_aruw3WEO71tysh6MYVV6WMWl_8FCP5VvEfnlR5M8E5FVh80';
-
-async function notifyVisitor(myNum) {
-  // Throttle: jangan kirim lagi dalam 1 jam dari device yang sama
-  const lastSent = localStorage.getItem('c_webhook');
-  if (lastSent && (Date.now() - parseInt(lastSent, 10)) < 3_600_000) return;
-
-  try {
-    const geo  = await fetch('https://ipapi.co/json/').then(r => r.json());
-    const flag = geo.country_code
-      ? geo.country_code.toUpperCase().replace(/./g, c =>
-          String.fromCodePoint(c.charCodeAt(0) + 127397))
-      : '🌍';
-
-    const payload = {
-      username: '🔍 Platypus Tracker',
-      embeds: [{
-        title: `${flag} Pengunjung Baru — The Platypus Files`,
-        color: 0xC9A84C,
-        fields: [
-          { name: '📊 Pengunjung ke-', value: `**#${myNum || '?'}**`, inline: true },
-          { name: '📍 Lokasi',
-            value: `**${geo.city||'?'}**, ${geo.region||'-'}\n${geo.country_name||'?'} ${flag}`,
-            inline: true },
-          { name: '🌐 IP',   value: `\`${geo.ip||'?'}\``, inline: false },
-          { name: '📡 ISP',  value: geo.org || '-',        inline: false },
-          { name: '🕐 Waktu',
-            value: new Date().toLocaleString('id-ID', {
-              timeZone: 'Asia/Makassar',
-              dateStyle: 'full',
-              timeStyle: 'short'
-            }),
-            inline: false },
-          { name: '🤖 UA',
-            value: `\`\`\`${navigator.userAgent.substring(0, 180)}\`\`\``,
-            inline: false }
-        ],
-        footer:    { text: 'Chaanae — Little Introduction' },
-        timestamp: new Date().toISOString()
-      }]
-    };
-
-    const res = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) localStorage.setItem('c_webhook', String(Date.now()));
-  } catch(e) {
-    console.warn('Webhook silent fail:', e.message);
-  }
-}
-
-/* ════════════════════════════════
-   INIT
-════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', async () => {
-  const myNum = await initVisitorCounter();
-  if (!sessionStorage.getItem('c_notified')) {
-    notifyVisitor(myNum);
-    sessionStorage.setItem('c_notified', '1');
-  }
-});
+window.addEventListener('DOMContentLoaded', initVisitorCounter);
 </script>
 </body>
 </html>
